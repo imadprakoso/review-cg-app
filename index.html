@@ -45,7 +45,7 @@
     <div class="w-full max-w-4xl">
         <div class="text-center mb-10">
             <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
-                CG Maps Challenge 
+                CG Maps Challenge
             </h1>
             <p class="text-slate-400 mb-8">Kumpulkan Poin Terbanyak & Tukarkan dengan hadiah!</p>
 
@@ -62,6 +62,9 @@
         <div id="tab-leaderboard" class="glass-panel p-6 md:p-10 rounded-3xl w-full transition-all duration-500">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-extrabold flex items-center gap-3">🏆 Papan Peringkat</h2>
+                <button onclick="toggleAdminMode()" class="text-slate-500 hover:text-white transition-colors cursor-pointer" title="Mode Admin">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
 
             <div id="loading" class="text-center py-10 font-bold text-slate-400 animate-pulse">
@@ -72,12 +75,12 @@
         </div>
 
         <div id="tab-input" class="glass-panel p-6 md:p-10 rounded-3xl w-full hidden-tab">
-            <h2 class="text-3xl font-extrabold mb-2 text-center text-blue-400">🚀 Staging Area</h2>
+            <h2 class="text-3xl font-extrabold mb-2 text-center text-blue-400">Setor Area</h2>
             <p class="text-slate-400 text-center mb-8">Setor link review Google Maps kamu di sini untuk mendapatkan 1 poin!</p>
 
             <form id="reviewForm" class="space-y-6 max-w-xl mx-auto">
                 <div>
-                    <label class="block font-bold text-sm mb-2 text-slate-300">Nama Lengkap 🥷</label>
+                    <label class="block font-bold text-sm mb-2 text-slate-300">Nama Lengkap </label>
                     <input type="text" id="inputName" required placeholder="Contoh: Budi Susanto" class="w-full px-5 py-4 bg-slate-800/50 border border-slate-600 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-lg text-white placeholder-slate-500">
                 </div>
                 <div>
@@ -166,31 +169,56 @@
             data.forEach((participant, index) => {
                 const rank = index + 1;
                 let extraClasses = 'rank-other';
-                let icon = `<span class="text-xl font-bold text-slate-400 w-8 text-center">#${rank}</span>`;
+                let icon = `<span class="text-xl md:text-2xl font-bold text-slate-400 w-6 md:w-8 text-center">#${rank}</span>`;
+                let statusBadge = '';
 
-                if (rank === 1) { extraClasses = 'rank-1'; icon = '<span class="text-2xl w-8 text-center">👑</span>'; }
-                else if (rank === 2) { extraClasses = 'rank-2'; icon = '<span class="text-2xl w-8 text-center">🥈</span>'; }
-                else if (rank === 3) { extraClasses = 'rank-3'; icon = '<span class="text-2xl w-8 text-center">🥉</span>'; }
+                // Logika Lencana & Status
+                if (rank === 1) { 
+                    extraClasses = 'rank-1'; 
+                    icon = '<span class="text-2xl md:text-3xl w-6 md:w-8 text-center">👑</span>'; 
+                    statusBadge = '<span class="bg-yellow-500/20 text-yellow-400 px-2 py-1 md:px-3 md:py-1 rounded-lg text-[10px] md:text-sm font-bold border border-yellow-500/30 whitespace-nowrap">🥇 Juara Bertahan</span>';
+                }
+                else if (rank === 2) { 
+                    extraClasses = 'rank-2'; 
+                    icon = '<span class="text-2xl md:text-3xl w-6 md:w-8 text-center">🥈</span>'; 
+                    statusBadge = '<span class="bg-slate-400/20 text-slate-300 px-2 py-1 md:px-3 md:py-1 rounded-lg text-[10px] md:text-sm font-bold border border-slate-400/30 whitespace-nowrap">🥈 Posisi Aman</span>';
+                }
+                else if (rank === 3) { 
+                    extraClasses = 'rank-3'; 
+                    icon = '<span class="text-2xl md:text-3xl w-6 md:w-8 text-center">🥉</span>'; 
+                    statusBadge = '<span class="bg-orange-500/20 text-orange-400 px-2 py-1 md:px-3 md:py-1 rounded-lg text-[10px] md:text-sm font-bold border border-orange-500/30 whitespace-nowrap">🥉 Mengejar</span>';
+                } 
+                else {
+                    statusBadge = '<span class="bg-pink-500/20 text-pink-400 px-2 py-1 md:px-3 md:py-1 rounded-lg text-[10px] md:text-sm font-bold border border-pink-500/30 whitespace-nowrap">🔥 On Fire</span>';
+                }
 
                 const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(participant.name)}`;
 
+                // HTML Card dengan Glassmorphism & Status Badge
                 const cardHtml = `
-                    <div class="flex items-center justify-between p-4 rounded-2xl ${extraClasses} transition-all">
-                        <div class="flex items-center gap-4">
+                    <div class="flex items-center justify-between p-3 md:p-5 rounded-2xl ${extraClasses} transition-all">
+                        <div class="flex items-center gap-3 md:gap-5">
                             ${icon}
-                            <img src="${avatarUrl}" alt="avatar" class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-600">
-                            <span class="text-xl font-bold text-white tracking-tight">${participant.name}</span>
+                            <img src="${avatarUrl}" alt="avatar" class="w-10 h-10 md:w-14 md:h-14 rounded-full bg-slate-800 border-2 border-slate-600 shadow-lg">
+                            <div class="flex flex-col">
+                                <span class="text-lg md:text-2xl font-bold text-white tracking-tight">${participant.name}</span>
+                                <!-- Tampil di bawah nama untuk versi HP (Mobile) -->
+                                <div class="md:hidden mt-1">${statusBadge}</div>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <div class="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-xl border border-blue-500/30 font-black text-2xl shadow-inner">
-                                ${participant.score} <span class="text-sm font-normal text-blue-400/70">pts</span>
+                        <div class="flex items-center gap-3 md:gap-5">
+                            <!-- Tampil di samping poin untuk versi Laptop (Desktop) -->
+                            <div class="hidden md:block">${statusBadge}</div>
+                            
+                            <div class="bg-blue-600/20 text-blue-400 px-3 py-2 md:px-5 md:py-3 rounded-xl border border-blue-500/30 font-black text-xl md:text-3xl shadow-inner text-center">
+                                ${participant.score} <span class="text-[10px] md:text-sm font-normal text-blue-400/70">pts</span>
                             </div>
                             
-                            <div class="admin-controls gap-2">
-                                <button onclick="sendAdminAction('${participant.name}', 'decrease')" class="bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white p-2 rounded-lg transition-colors cursor-pointer" title="Kurangi Poin (-1)">
+                            <div class="admin-controls flex-col gap-1 md:flex-row md:gap-2">
+                                <button onclick="sendAdminAction('${participant.name}', 'decrease')" class="bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="Kurangi Poin (-1)">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-                                <button onclick="sendAdminAction('${participant.name}', 'delete')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition-colors cursor-pointer" title="Hapus User">
+                                <button onclick="sendAdminAction('${participant.name}', 'delete')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="Hapus User">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
