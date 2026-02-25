@@ -135,9 +135,9 @@
         <div class="text-center mb-10">
             <h1
                 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
-                CG Maps Challenge 🎯
+                CG Maps Challenge
             </h1>
-            <p class="text-slate-400 mb-8">Kumpulkan Poin Terbanyak & Tukerkan dengan hadiah!</p>
+            <p class="text-slate-400 mb-8">Kumpulkan Poin Terbanyak & Tukarkan dengan hadiah!</p>
 
             <div class="flex justify-center gap-4">
                 <button onclick="switchTab('leaderboard')" id="btn-leaderboard"
@@ -209,7 +209,7 @@
         // ==========================================================
         // MASUKKAN URL GOOGLE SCRIPT KAMU DI BAWAH INI (Di dalam kutip)
         // ==========================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbw4UBQBDF7sMT-JMyc2xJqNoKVsuQy4NOEOH6sG463TwMRurECAh5t1qCURe-e-M4mVkw/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec";
 
         let globalData = []; // Menyimpan data sementara untuk mengecek link duplikat
 
@@ -244,7 +244,7 @@
 
         // --- MENGAMBIL DATA DARI DATABASE ---
         async function fetchData() {
-            if (API_URL === "https://script.google.com/macros/s/AKfycbw4UBQBDF7sMT-JMyc2xJqNoKVsuQy4NOEOH6sG463TwMRurECAh5t1qCURe-e-M4mVkw/exec") {
+            if (API_URL === "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec") {
                 document.getElementById('loading').innerHTML = "⚠️ Masukkan URL API di script index.html terlebih dahulu!";
                 return;
             }
