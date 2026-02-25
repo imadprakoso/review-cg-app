@@ -4,216 +4,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CG - Maps Challenge</title>
+    <title>CG Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: white;
-            min-height: 100vh;
-        }
-
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .tab-btn {
-            transition: all 0.3s ease;
-        }
-
-        .tab-active {
-            background-color: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-        }
-
-        .tab-inactive {
-            background-color: transparent;
-            color: #94a3b8;
-            border-color: #475569;
-            hover: text-white;
-        }
-
-        /* Animasi Rank 1 */
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white; min-height: 100vh; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); }
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-active { background-color: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .tab-inactive { background-color: transparent; color: #94a3b8; border-color: #475569; }
+        .tab-inactive:hover { color: white; background-color: rgba(255,255,255,0.05); }
+        
         @keyframes float-glow {
-            0% {
-                transform: translateY(0px);
-                box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
-            }
-
-            50% {
-                transform: translateY(-5px);
-                box-shadow: 0 0 25px rgba(251, 191, 36, 0.8);
-            }
-
-            100% {
-                transform: translateY(0px);
-                box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
-            }
+            0% { transform: translateY(0px); box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
+            50% { transform: translateY(-5px); box-shadow: 0 0 25px rgba(251, 191, 36, 0.8); }
+            100% { transform: translateY(0px); box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
         }
+        .rank-1 { animation: float-glow 2s infinite ease-in-out; background: linear-gradient(135deg, #422006, #78350f); border: 2px solid #fbbf24; }
+        .rank-2 { background: linear-gradient(135deg, #1e293b, #334155); border: 2px solid #94a3b8; }
+        .rank-3 { background: linear-gradient(135deg, #431407, #7c2d12); border: 2px solid #ea580c; }
+        .rank-other { background-color: rgba(30, 41, 59, 0.8); border: 1px solid #334155; }
 
-        .rank-1 {
-            animation: float-glow 2s infinite ease-in-out;
-            background: linear-gradient(135deg, #422006, #78350f);
-            border: 2px solid #fbbf24;
-        }
-
-        .rank-2 {
-            background: linear-gradient(135deg, #1e293b, #334155);
-            border: 2px solid #94a3b8;
-        }
-
-        .rank-3 {
-            background: linear-gradient(135deg, #431407, #7c2d12);
-            border: 2px solid #ea580c;
-        }
-
-        .rank-other {
-            background-color: rgba(30, 41, 59, 0.8);
-            border: 1px solid #334155;
-        }
-
-        /* Menyembunyikan elemen */
-        .hidden-tab {
-            display: none !important;
-        }
-
-        .admin-controls {
-            display: none;
-        }
-
-        .admin-mode-on .admin-controls {
-            display: flex;
-        }
-
-        /* Message Box Custom */
-        .msg-box {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 50;
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-weight: bold;
-            transform: translateX(150%);
-            transition: transform 0.4s ease;
-        }
-
-        .msg-box.show {
-            transform: translateX(0);
-        }
-
-        .msg-error {
-            background-color: #ef4444;
-            color: white;
-            border-left: 5px solid #991b1b;
-        }
-
-        .msg-success {
-            background-color: #10b981;
-            color: white;
-            border-left: 5px solid #065f46;
-        }
+        .hidden-tab { display: none !important; }
+        .admin-controls { display: none; }
+        .admin-mode-on .admin-controls { display: flex; }
+        
+        .msg-box { position: fixed; top: 20px; right: 20px; z-index: 50; padding: 15px 25px; border-radius: 10px; font-weight: bold; transform: translateX(150%); transition: transform 0.4s ease; }
+        .msg-box.show { transform: translateX(0); }
+        .msg-error { background-color: #ef4444; color: white; border-left: 5px solid #991b1b; }
+        .msg-success { background-color: #10b981; color: white; border-left: 5px solid #065f46; }
     </style>
 </head>
 
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <!-- Notifikasi Kustom -->
     <div id="msgBox" class="msg-box shadow-lg">Pesan muncul di sini</div>
 
     <div class="w-full max-w-4xl">
-        <!-- HEADER & TABS -->
         <div class="text-center mb-10">
-            <h1
-                class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
-                CG Maps Challenge
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
+                CG Maps Challenge 🎯
             </h1>
             <p class="text-slate-400 mb-8">Kumpulkan Poin Terbanyak & Tukarkan dengan hadiah!</p>
 
             <div class="flex justify-center gap-4">
-                <button onclick="switchTab('leaderboard')" id="btn-leaderboard"
-                    class="tab-btn tab-active px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2">
+                <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="tab-btn tab-active px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-trophy"></i> Leaderboard
                 </button>
-                <button onclick="switchTab('input')" id="btn-input"
-                    class="tab-btn tab-inactive px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2">
+                <button onclick="switchTab('input')" id="btn-input" class="tab-btn tab-inactive px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-plus-circle"></i> Tambah Poin
                 </button>
             </div>
         </div>
 
-        <!-- TAB 1: LEADERBOARD (Tengah & Besar) -->
         <div id="tab-leaderboard" class="glass-panel p-6 md:p-10 rounded-3xl w-full transition-all duration-500">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-extrabold flex items-center gap-3">
-                    🏆 Papan Peringkat
-                </h2>
-                <!-- Tombol rahasia untuk memunculkan opsi Edit/Delete -->
-                <button onclick="toggleAdminMode()" class="text-slate-500 hover:text-white transition-colors">
+                <h2 class="text-3xl font-extrabold flex items-center gap-3">🏆 Papan Peringkat</h2>
+                <button onclick="toggleAdminMode()" class="text-slate-500 hover:text-white transition-colors cursor-pointer" title="Mode Admin">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
 
             <div id="loading" class="text-center py-10 font-bold text-slate-400 animate-pulse">
-                <i class="fa-solid fa-satellite-dish mr-2"></i> Mengunduh data dari server...
+                <i class="fa-solid fa-satellite-dish fa-spin mr-2"></i> Mengunduh data dari server...
             </div>
 
-            <div id="leaderboard-list" class="space-y-4">
-                <!-- Data akan masuk ke sini otomatis -->
-            </div>
+            <div id="leaderboard-list" class="space-y-4"></div>
         </div>
 
-        <!-- TAB 2: INPUT STAGING (Terpisah & Rapi) -->
         <div id="tab-input" class="glass-panel p-6 md:p-10 rounded-3xl w-full hidden-tab">
             <h2 class="text-3xl font-extrabold mb-2 text-center text-blue-400">🚀 Staging Area</h2>
-            <p class="text-slate-400 text-center mb-8">Setor link review Google Maps kamu di sini untuk mendapatkan 1
-                poin!</p>
+            <p class="text-slate-400 text-center mb-8">Setor link review Google Maps kamu di sini untuk mendapatkan 1 poin!</p>
 
             <form id="reviewForm" class="space-y-6 max-w-xl mx-auto">
                 <div>
                     <label class="block font-bold text-sm mb-2 text-slate-300">Nama Lengkap 🥷</label>
-                    <input type="text" id="inputName" required placeholder="Contoh: Budi Susanto"
-                        class="w-full px-5 py-4 bg-slate-800/50 border border-slate-600 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-lg text-white placeholder-slate-500">
+                    <input type="text" id="inputName" required placeholder="Contoh: Budi Susanto" class="w-full px-5 py-4 bg-slate-800/50 border border-slate-600 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-lg text-white placeholder-slate-500">
                 </div>
                 <div>
-                    <label class="block font-bold text-sm mb-2 text-slate-300">Link Review Maps 🔗 <span
-                            class="text-red-400">*wajib</span></label>
-                    <input type="url" id="inputLink" required placeholder="https://goo.gl/maps/..."
-                        class="w-full px-5 py-4 bg-slate-800/50 border border-slate-600 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-white placeholder-slate-500">
+                    <label class="block font-bold text-sm mb-2 text-slate-300">Link Review Maps 🔗 <span class="text-red-400">*wajib</span></label>
+                    <input type="url" id="inputLink" required placeholder="https://goo.gl/maps/..." class="w-full px-5 py-4 bg-slate-800/50 border border-slate-600 rounded-xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-white placeholder-slate-500">
                 </div>
                 <div>
-                    <label class="block font-bold text-sm mb-2 text-slate-300">Screenshot Bukti 📸 <span
-                            class="text-slate-500 font-normal">*opsional</span></label>
-                    <input type="file" id="inputImage" accept="image/*"
-                        class="w-full px-5 py-3 bg-slate-800/50 border border-slate-600 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 transition-all text-slate-300">
+                    <label class="block font-bold text-sm mb-2 text-slate-300">Screenshot Bukti 📸 <span class="text-slate-500 font-normal">*opsional</span></label>
+                    <input type="file" id="inputImage" accept="image/*" class="w-full px-5 py-3 bg-slate-800/50 border border-slate-600 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 transition-all text-slate-300 cursor-pointer">
                 </div>
-                <button type="submit" id="submitBtn"
-                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-[1.02] active:scale-[0.98] mt-4">
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-[1.02] active:scale-[0.98] mt-4 cursor-pointer">
                     🚀 KIRIM & DAPATKAN POIN!
                 </button>
             </form>
         </div>
-
     </div>
 
     <script>
-        // ==========================================================
-        // MASUKKAN URL GOOGLE SCRIPT KAMU DI BAWAH INI (Di dalam kutip)
-        // ==========================================================
+        // URL API Milikmu yang benar!
         const API_URL = "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec";
+        let globalData = []; 
 
-        let globalData = []; // Menyimpan data sementara untuk mengecek link duplikat
-
-        // --- SISTEM TABS ---
         function switchTab(tabName) {
             const tabLeaderboard = document.getElementById('tab-leaderboard');
             const tabInput = document.getElementById('tab-input');
@@ -223,18 +112,17 @@
             if (tabName === 'leaderboard') {
                 tabLeaderboard.classList.remove('hidden-tab');
                 tabInput.classList.add('hidden-tab');
-                btnLeaderboard.className = "tab-btn tab-active px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2";
-                btnInput.className = "tab-btn tab-inactive px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2";
-                fetchData(); // Refresh data setiap balik ke leaderboard
+                btnLeaderboard.className = "tab-btn tab-active px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2 cursor-pointer";
+                btnInput.className = "tab-btn tab-inactive px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2 cursor-pointer";
+                fetchData(); 
             } else {
                 tabLeaderboard.classList.add('hidden-tab');
                 tabInput.classList.remove('hidden-tab');
-                btnLeaderboard.className = "tab-btn tab-inactive px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2";
-                btnInput.className = "tab-btn tab-active px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2";
+                btnLeaderboard.className = "tab-btn tab-inactive px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2 cursor-pointer";
+                btnInput.className = "tab-btn tab-active px-6 py-3 rounded-full font-bold border-2 flex items-center gap-2 cursor-pointer";
             }
         }
 
-        // --- SISTEM NOTIFIKASI KUSTOM (ALERT PENGGANTI) ---
         function showMessage(text, type) {
             const msgBox = document.getElementById('msgBox');
             msgBox.innerText = text;
@@ -242,26 +130,32 @@
             setTimeout(() => { msgBox.classList.remove('show'); }, 3000);
         }
 
-        // --- MENGAMBIL DATA DARI DATABASE ---
         async function fetchData() {
-            if (API_URL === "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec") {
-                document.getElementById('loading').innerHTML = "⚠️ Masukkan URL API di script index.html terlebih dahulu!";
-                return;
-            }
-
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('leaderboard-list').innerHTML = '';
+            const loadingEl = document.getElementById('loading');
+            const listEl = document.getElementById('leaderboard-list');
+            
+            loadingEl.style.display = 'block';
+            loadingEl.innerHTML = '<i class="fa-solid fa-satellite-dish fa-spin mr-2"></i> Mengunduh data dari server...';
+            listEl.innerHTML = '';
 
             try {
+                // Proses mengambil data (GET)
                 const response = await fetch(API_URL);
-                globalData = await response.json();
-                renderLeaderboard(globalData);
+                const textData = await response.text();
+                
+                try {
+                    globalData = JSON.parse(textData);
+                    renderLeaderboard(globalData);
+                } catch (jsonErr) {
+                    console.error("Bukan JSON:", textData);
+                    loadingEl.innerHTML = "⚠️ Akses ditolak oleh Google. Pastikan pengaturan di Apps Script bagian 'Who has access' diatur ke 'Anyone' (Bukan Anyone with Google account).";
+                }
             } catch (error) {
-                document.getElementById('loading').innerHTML = "Gagal memuat data. Coba refresh! 🥲";
+                console.error("Gagal Fetch:", error);
+                loadingEl.innerHTML = "⚠️ Gagal tersambung ke server Google. Cek koneksi internet.";
             }
         }
 
-        // --- MENAMPILKAN LEADERBOARD ---
         function renderLeaderboard(data) {
             document.getElementById('loading').style.display = 'none';
             const listEl = document.getElementById('leaderboard-list');
@@ -281,7 +175,7 @@
                 else if (rank === 2) { extraClasses = 'rank-2'; icon = '<span class="text-2xl w-8 text-center">🥈</span>'; }
                 else if (rank === 3) { extraClasses = 'rank-3'; icon = '<span class="text-2xl w-8 text-center">🥉</span>'; }
 
-                const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${participant.name}`;
+                const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(participant.name)}`;
 
                 const cardHtml = `
                     <div class="flex items-center justify-between p-4 rounded-2xl ${extraClasses} transition-all">
@@ -295,12 +189,11 @@
                                 ${participant.score} <span class="text-sm font-normal text-blue-400/70">pts</span>
                             </div>
                             
-                            <!-- Tombol Admin (Edit/Delete) - Disembunyikan secara default -->
                             <div class="admin-controls gap-2">
-                                <button onclick="sendAdminAction('${participant.name}', 'decrease')" class="bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white p-2 rounded-lg transition-colors tooltip" title="Kurangi Poin (-1)">
+                                <button onclick="sendAdminAction('${participant.name}', 'decrease')" class="bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white p-2 rounded-lg transition-colors cursor-pointer" title="Kurangi Poin (-1)">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-                                <button onclick="sendAdminAction('${participant.name}', 'delete')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition-colors tooltip" title="Hapus User">
+                                <button onclick="sendAdminAction('${participant.name}', 'delete')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-2 rounded-lg transition-colors cursor-pointer" title="Hapus User">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -311,14 +204,12 @@
             });
         }
 
-        // --- SUBMIT FORM (CEK DUPLIKAT LALU KIRIM) ---
         document.getElementById('reviewForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const nameInput = document.getElementById('inputName').value.trim();
             const linkInput = document.getElementById('inputLink').value.trim();
             const btn = document.getElementById('submitBtn');
 
-            // VALIDASI: Cek apakah link sudah pernah diinput (gabungan semua link)
             let isDuplicate = false;
             let submittedBy = "";
             for (let p of globalData) {
@@ -330,16 +221,14 @@
             }
 
             if (isDuplicate) {
-                showMessage(`Link ini sudah pernah dipakai oleh ${submittedBy}! ❌`, 'error');
+                showMessage(`Link ini sudah dipakai oleh ${submittedBy}! ❌`, 'error');
                 return;
             }
 
-            // PROSES PENGIRIMAN
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sedang Mengirim...';
             btn.disabled = true;
 
             try {
-                // Gunakan mode no-cors karena kita menembak Google Script
                 await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -347,13 +236,10 @@
                     body: JSON.stringify({ action: 'add', name: nameInput, link: linkInput })
                 });
 
-                // Efek Pesta / Confetti
                 confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#fbbf24'] });
 
                 showMessage('Berhasil! Poin ditambahkan! 🎉', 'success');
                 document.getElementById('reviewForm').reset();
-
-                // Pindah kembali ke tab leaderboard setelah 2 detik
                 setTimeout(() => { switchTab('leaderboard'); }, 2000);
 
             } catch (error) {
@@ -364,13 +250,10 @@
             }
         });
 
-        // --- FITUR ADMIN: EDIT/DELETE ---
-        function toggleAdminMode() {
-            document.body.classList.toggle('admin-mode-on');
-        }
+        function toggleAdminMode() { document.body.classList.toggle('admin-mode-on'); }
 
         async function sendAdminAction(userName, actionType) {
-            let confirmMsg = actionType === 'delete' ? `Yakin ingin menghapus semua data ${userName}?` : `Yakin ingin mengurangi 1 poin dari ${userName}?`;
+            let confirmMsg = actionType === 'delete' ? `Hapus semua data ${userName}?` : `Kurangi 1 poin dari ${userName}?`;
             if (!confirm(confirmMsg)) return;
 
             document.getElementById('loading').style.display = 'block';
@@ -382,13 +265,13 @@
                     body: JSON.stringify({ action: actionType, name: userName })
                 });
                 showMessage('Perubahan berhasil disimpan! ⚙️', 'success');
-                setTimeout(fetchData, 1500); // Refresh data
+                setTimeout(fetchData, 1500); 
             } catch (error) {
                 showMessage('Gagal melakukan aksi admin.', 'error');
             }
         }
 
-        // Jalankan Fetch saat web pertama kali dibuka
+        // Mulai aplikasi
         fetchData();
     </script>
 </body>
