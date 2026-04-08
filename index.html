@@ -223,9 +223,9 @@
                 let claimColor = participant.availableClaims > 0 ? "text-emerald-400 animate-pulse font-extrabold" : "text-slate-400";
                 let claimDisplayHtml = `
                     <div class="mt-2 text-[11px] md:text-sm bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg inline-block">
-                        <span class="text-slate-300">Sudah Claim: <strong class="text-sky-400">${participant.claimedCount}x</strong></span>
+                        <span class="text-slate-300">Claim: <strong class="text-sky-400">${participant.claimedCount}x</strong></span>
                         <span class="mx-1 md:mx-2 text-slate-600">|</span>
-                        <span class="${claimColor}">Sisa Bisa Diajukan: <strong>${participant.availableClaims}x</strong></span>
+                        <span class="${claimColor}">Sisa: <strong>${participant.availableClaims}x</strong></span>
                     </div>
                 `;
 
