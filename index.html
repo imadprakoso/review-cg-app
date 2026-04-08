@@ -61,6 +61,20 @@
         </div>
     </div>
 
+    <!-- CUSTOM CONFIRM ACTION MODAL -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div id="confirmModalBox" class="bg-slate-800 border border-slate-600 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center transform scale-95 transition-transform duration-300">
+            <div id="confirmIcon" class="text-4xl mb-4 text-blue-400"><i class="fa-solid fa-circle-question"></i></div>
+            <h3 class="text-2xl font-bold text-white mb-2">Konfirmasi Admin</h3>
+            <p id="confirmMessage" class="text-slate-400 text-sm mb-6">Apakah Anda yakin?</p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition-colors">Batal</button>
+                <button id="confirmYesBtn" onclick="executePendingAction()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-500/30">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MAIN APP WRAPPER -->
     <div class="w-full max-w-4xl">
         <div class="text-center mb-10">
@@ -122,7 +136,7 @@
 
     <script>
         // API URL TETAP AMAN
-        const API_URL = "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxEkkorYYko93Ihip3Cyi1HsiSM2NAaIFbKiU9b1BgQBEFI9XQjd8lPL1n7tjDcCpbGAg/exec";
         let globalData = []; 
 
         function switchTab(tabName) {
@@ -161,7 +175,8 @@
             listEl.innerHTML = '';
 
             try {
-                const response = await fetch(API_URL);
+                // TAMBAHAN PENTING: "?nocache=" memaksa browser memuat ketikan terbaru kamu di Excel
+                const response = await fetch(API_URL + "?nocache=" + new Date().getTime());
                 const textData = await response.text();
                 
                 try {
@@ -214,11 +229,14 @@
                     </div>
                 `;
 
+                // Escape karakter petik (jika ada nama dengan tanda petik)
+                const safeName = participant.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
                 // Tombol ACC Claim Admin
                 let adminClaimBtn = '';
                 if (participant.availableClaims > 0) {
                     adminClaimBtn = `
-                        <button onclick="sendAdminAction('${participant.name}', 'claim')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="ACC 1 Reward">
+                        <button onclick="sendAdminAction('${safeName}', 'claim')" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="ACC 1 Reward">
                             <i class="fa-solid fa-gift"></i> ACC Claim
                         </button>
                     `;
@@ -243,10 +261,10 @@
                             
                             <div class="admin-controls flex-col gap-1 md:flex-row md:gap-2">
                                 ${adminClaimBtn}
-                                <button onclick="sendAdminAction('${participant.name}', 'decrease')" class="bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="Kurangi Poin (-1)">
+                                <button onclick="sendAdminAction('${safeName}', 'decrease')" class="bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="Kurangi Poin (-1)">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-                                <button onclick="sendAdminAction('${participant.name}', 'delete')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="Hapus User">
+                                <button onclick="sendAdminAction('${safeName}', 'delete')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer" title="Hapus User">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -354,27 +372,79 @@
             if (e.key === 'Enter') verifyAdmin();
         });
 
-        async function sendAdminAction(userName, actionType) {
-            let confirmMsg = "";
-            if (actionType === 'delete') confirmMsg = `Hapus semua data ${userName}?`;
-            if (actionType === 'decrease') confirmMsg = `Kurangi 1 poin dari ${userName}?`;
-            if (actionType === 'claim') confirmMsg = `ACC 1 Reward untuk ${userName}? (Ini akan menambah jumlah 'Sudah Claim')`;
-            
-            if (!confirm(confirmMsg)) return;
+        // ==========================================
+        // FITUR KONFIRMASI CUSTOM ANTI-BLOKIR
+        // ==========================================
+        let pendingAdminAction = null;
 
-            document.getElementById('loading').style.display = 'block';
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: actionType, name: userName })
-                });
-                showMessage('Perubahan berhasil disimpan! ⚙️', 'success');
-                setTimeout(fetchData, 1500); 
-            } catch (error) {
-                showMessage('Gagal melakukan aksi admin.', 'error');
+        function sendAdminAction(userName, actionType) {
+            let confirmMsg = "";
+            let iconHtml = '<i class="fa-solid fa-circle-question"></i>';
+            let iconColor = 'text-blue-400';
+            let btnColor = 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/30';
+
+            if (actionType === 'delete') {
+                confirmMsg = `Hapus semua data <strong>${userName}</strong>?`;
+                iconHtml = '<i class="fa-solid fa-trash"></i>';
+                iconColor = 'text-red-500';
+                btnColor = 'bg-red-600 hover:bg-red-500 shadow-red-500/30';
+            } else if (actionType === 'decrease') {
+                confirmMsg = `Kurangi 1 poin dari <strong>${userName}</strong>?`;
+                iconHtml = '<i class="fa-solid fa-minus"></i>';
+                iconColor = 'text-orange-500';
+                btnColor = 'bg-orange-600 hover:bg-orange-500 shadow-orange-500/30';
+            } else if (actionType === 'claim') {
+                confirmMsg = `ACC 1 Reward untuk <strong>${userName}</strong>?<br><span class="text-xs text-slate-500 mt-2 block">(Ini akan mengubah angka 'Sudah Claim' menjadi +1)</span>`;
+                iconHtml = '<i class="fa-solid fa-gift"></i>';
+                iconColor = 'text-emerald-400';
+                btnColor = 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/30';
             }
+
+            // Setup Konten Modal
+            document.getElementById('confirmIcon').innerHTML = iconHtml;
+            document.getElementById('confirmIcon').className = `text-4xl mb-4 ${iconColor}`;
+            document.getElementById('confirmMessage').innerHTML = confirmMsg;
+            document.getElementById('confirmYesBtn').className = `flex-1 text-white py-3 rounded-xl font-bold transition-colors shadow-lg ${btnColor}`;
+
+            // Simpan aksi yang akan dieksekusi jika klik YES
+            pendingAdminAction = async function() {
+                closeConfirmModal();
+                document.getElementById('loading').style.display = 'block';
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: actionType, name: userName })
+                    });
+                    showMessage('Perubahan berhasil disimpan! ⚙️', 'success');
+                    setTimeout(fetchData, 1500); 
+                } catch (error) {
+                    showMessage('Gagal melakukan aksi admin.', 'error');
+                }
+            };
+
+            // Tampilkan Modal
+            const modal = document.getElementById('confirmModal');
+            const box = document.getElementById('confirmModalBox');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => box.classList.replace('scale-95', 'scale-100'), 10);
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            const box = document.getElementById('confirmModalBox');
+            box.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                pendingAdminAction = null;
+            }, 200);
+        }
+
+        function executePendingAction() {
+            if (pendingAdminAction) pendingAdminAction();
         }
 
         // Mulai aplikasi
