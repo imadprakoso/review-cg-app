@@ -7,21 +7,19 @@
     <title>CG Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Font Inter mirip dengan San Francisco (Apple Font) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background-color: #000000; /* Pitch Black iOS Dark Mode */
+            background-color: #000000; 
             color: #F2F2F2; 
             min-height: 100vh; 
             -webkit-font-smoothing: antialiased;
         }
         
-        /* Apple Materials & Glassmorphism */
         .ios-glass { 
-            background: rgba(28, 28, 30, 0.7); /* #1C1C1E */
+            background: rgba(28, 28, 30, 0.7); 
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08); 
@@ -32,7 +30,6 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* iOS Inputs */
         .ios-input { 
             background-color: #2C2C2E; 
             border: 1.5px solid transparent; 
@@ -43,16 +40,14 @@
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15); 
         }
 
-        /* iOS Buttons */
         .ios-btn-primary { background-color: #007AFF; color: white; transition: transform 0.1s ease, background-color 0.2s ease; }
         .ios-btn-primary:active { transform: scale(0.96); background-color: #005bb5; }
 
-        /* Hidden logic */
         .hidden-tab { display: none !important; }
         .admin-controls { display: none; }
         .admin-mode-on .admin-controls { display: flex; }
         
-        /* Dynamic Island / iOS Toast Notification */
+        /* Dynamic Island Modal Style */
         .msg-box { 
             position: fixed; 
             top: 20px; 
@@ -73,8 +68,18 @@
         .msg-error { background-color: rgba(255, 59, 48, 0.85); color: white; }
         .msg-success { background-color: rgba(52, 199, 89, 0.85); color: white; }
 
-        /* Subtle glows for top ranks */
-        .rank-1 { background-color: rgba(255, 214, 10, 0.08); border: 1px solid rgba(255, 214, 10, 0.2); }
+        /* Animasi Glow & Float untuk Posisi 1 (Diperbarui untuk Apple Dark Theme) */
+        @keyframes float-glow-ios {
+            0% { transform: translateY(0px); box-shadow: 0 0 10px rgba(255, 214, 10, 0.15); }
+            50% { transform: translateY(-4px); box-shadow: 0 0 25px rgba(255, 214, 10, 0.5); }
+            100% { transform: translateY(0px); box-shadow: 0 0 10px rgba(255, 214, 10, 0.15); }
+        }
+
+        .rank-1 { 
+            animation: float-glow-ios 3s infinite ease-in-out;
+            background-color: rgba(255, 214, 10, 0.1); 
+            border: 1px solid rgba(255, 214, 10, 0.3); 
+        }
         .rank-2 { background-color: rgba(235, 235, 245, 0.05); border: 1px solid rgba(235, 235, 245, 0.15); }
         .rank-3 { background-color: rgba(255, 159, 10, 0.05); border: 1px solid rgba(255, 159, 10, 0.15); }
         .rank-other { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); }
@@ -83,10 +88,9 @@
 
 <body class="p-4 md:p-8 flex flex-col items-center relative overflow-x-hidden">
 
-    <!-- Notifikasi Pop-up -->
     <div id="msgBox" class="msg-box">Pesan muncul di sini</div>
 
-    <!-- CUSTOM PASSWORD MODAL (Apple Style Alert) -->
+    <!-- CUSTOM PASSWORD MODAL -->
     <div id="adminModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden items-center justify-center p-4 transition-opacity duration-300">
         <div id="adminModalBox" class="bg-[#1C1C1E] border border-white/10 p-8 rounded-[24px] shadow-2xl max-w-sm w-full text-center transform scale-95 transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1)">
             <div class="text-4xl mb-4 text-[#007AFF]"><i class="fa-solid fa-lock"></i></div>
@@ -118,7 +122,6 @@
 
     <!-- MAIN APP WRAPPER -->
     <div class="w-full max-w-3xl">
-        <!-- HEADER -->
         <div class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
                 CG Maps Challenge
@@ -151,7 +154,7 @@
                 <i class="fa-solid fa-circle-notch fa-spin mr-2 text-[#007AFF]"></i> Menyinkronkan data...
             </div>
 
-            <div id="leaderboard-list" class="space-y-3"></div>
+            <div id="leaderboard-list" class="space-y-3 md:space-y-4"></div>
         </div>
 
         <!-- TAB INPUT -->
@@ -252,19 +255,26 @@
                 const rank = index + 1;
                 let extraClasses = 'rank-other';
                 let icon = `<span class="text-lg md:text-xl font-bold text-[#636366]">#${rank}</span>`;
+                let statusBadge = '';
                 
+                // Rank Styling & Badges (Lencana)
                 if (rank === 1) { 
                     extraClasses = 'rank-1'; 
                     icon = '<span class="text-xl md:text-2xl text-[#FFD60A]"><i class="fa-solid fa-crown"></i></span>'; 
+                    statusBadge = '<span class="bg-[#FFD60A]/10 text-[#FFD60A] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#FFD60A]/20 whitespace-nowrap">🥇 Juara Bertahan</span>';
                 } else if (rank === 2) { 
                     extraClasses = 'rank-2'; 
                     icon = '<span class="text-xl md:text-2xl text-[#D1D1D6]"><i class="fa-solid fa-medal"></i></span>'; 
+                    statusBadge = '<span class="bg-[#D1D1D6]/10 text-[#D1D1D6] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#D1D1D6]/20 whitespace-nowrap">🥈 Posisi Aman</span>';
                 } else if (rank === 3) { 
                     extraClasses = 'rank-3'; 
                     icon = '<span class="text-xl md:text-2xl text-[#FF9F0A]"><i class="fa-solid fa-award"></i></span>'; 
+                    statusBadge = '<span class="bg-[#FF9F0A]/10 text-[#FF9F0A] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#FF9F0A]/20 whitespace-nowrap">🥉 Mengejar</span>';
+                } else {
+                    statusBadge = '<span class="bg-[#FF2D55]/10 text-[#FF2D55] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#FF2D55]/20 whitespace-nowrap">🔥 On Fire</span>';
                 }
 
-                // Apple Style Claim Badge
+                // Apple Style Claim Badge (Data Kelipatan)
                 let claimColor = participant.availableClaims > 0 ? "text-[#34C759] font-semibold" : "text-[#8E8E93]";
                 let pulseClass = participant.availableClaims > 0 ? "border-[#34C759]/30 bg-[#34C759]/10 shadow-sm" : "border-white/5 bg-[#2C2C2E]";
                 
@@ -290,6 +300,7 @@
 
                 const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(participant.name)}&backgroundColor=transparent`;
 
+                // Layout Baru Responsif (Apple Style)
                 const cardHtml = `
                     <div class="flex flex-col md:flex-row p-3 md:p-4 rounded-2xl ${extraClasses} transition-all gap-3 md:gap-5 relative overflow-hidden items-start md:items-center justify-between">
                         
@@ -298,8 +309,12 @@
                             <img src="${avatarUrl}" alt="avatar" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#2C2C2E] border border-white/10 shrink-0">
                             
                             <div class="flex flex-col min-w-0 flex-1">
-                                <span class="text-[16px] md:text-lg font-semibold text-white truncate leading-tight">${participant.name}</span>
-                                <div class="hidden md:block">${claimDisplayHtml}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[16px] md:text-lg font-semibold text-white truncate leading-tight">${participant.name}</span>
+                                    <div class="hidden md:block">${statusBadge}</div>
+                                </div>
+                                <div class="md:hidden mt-1">${statusBadge}</div>
+                                <div class="hidden md:block mt-0.5">${claimDisplayHtml}</div>
                             </div>
 
                             <div class="md:hidden text-[#007AFF] font-bold text-xl shrink-0 flex items-baseline gap-0.5">
@@ -379,9 +394,6 @@
             }
         });
 
-        // ==========================================
-        // APPLE STYLE MODALS 
-        // ==========================================
         function toggleAdminMode() { 
             const isAdminOn = document.body.classList.contains('admin-mode-on');
             
