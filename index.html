@@ -7,8 +7,9 @@
     <title>CG Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
@@ -34,6 +35,8 @@
             background-color: #2C2C2E; 
             border: 1.5px solid transparent; 
             transition: all 0.2s ease;
+            appearance: none;
+            color-scheme: dark;
         }
         .ios-input:focus { 
             border-color: #007AFF; 
@@ -46,43 +49,84 @@
         .hidden-tab { display: none !important; }
         .admin-controls { display: none; }
         .admin-mode-on .admin-controls { display: flex; }
+        .admin-mode-on .admin-indicator { display: block !important; }
         
-        /* Dynamic Island Modal Style */
         .msg-box { 
-            position: fixed; 
-            top: 20px; 
-            left: 50%;
-            transform: translateX(-50%) translateY(-150%); 
-            z-index: 50; 
-            padding: 12px 24px; 
-            border-radius: 9999px; 
-            font-weight: 500; 
-            font-size: 14px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%); 
+            z-index: 50; padding: 12px 24px; border-radius: 9999px; font-weight: 500; font-size: 14px;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
         }
         .msg-box.show { transform: translateX(-50%) translateY(0); }
         .msg-error { background-color: rgba(255, 59, 48, 0.85); color: white; }
         .msg-success { background-color: rgba(52, 199, 89, 0.85); color: white; }
 
-        /* Animasi Glow & Float untuk Posisi 1 (Diperbarui untuk Apple Dark Theme) */
-        @keyframes float-glow-ios {
-            0% { transform: translateY(0px); box-shadow: 0 0 10px rgba(255, 214, 10, 0.15); }
-            50% { transform: translateY(-4px); box-shadow: 0 0 25px rgba(255, 214, 10, 0.5); }
-            100% { transform: translateY(0px); box-shadow: 0 0 10px rgba(255, 214, 10, 0.15); }
+        select.ios-input {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238E8E93' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
         }
 
-        .rank-1 { 
-            animation: float-glow-ios 3s infinite ease-in-out;
-            background-color: rgba(255, 214, 10, 0.1); 
-            border: 1px solid rgba(255, 214, 10, 0.3); 
-        }
+        .rank-1 { background-color: rgba(255, 214, 10, 0.08); border: 1px solid rgba(255, 214, 10, 0.2); }
         .rank-2 { background-color: rgba(235, 235, 245, 0.05); border: 1px solid rgba(235, 235, 245, 0.15); }
         .rank-3 { background-color: rgba(255, 159, 10, 0.05); border: 1px solid rgba(255, 159, 10, 0.15); }
         .rank-other { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); }
+
+        .v-bar-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 250px; 
+            padding-top: 30px;
+            gap: 8px;
+        }
+        .v-bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* FIX: Memaksa isi batang mulai dari bawah */
+            height: 100%; /* FIX: Membutuhkan tinggi 100% dari container */
+            flex: 1;
+            max-width: 60px; 
+        }
+        .v-bar-fill {
+            width: 100%;
+            background-color: #007AFF; 
+            border-radius: 6px 6px 0 0;
+            height: 0%; 
+            transition: height 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+        }
+        .v-bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            font-weight: 700;
+            color: #FFFFFF;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+        .v-bar-fill.animated .v-bar-value { opacity: 1; }
+        .v-bar-label {
+            margin-top: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #8E8E93;
+            text-align: center;
+            white-space: nowrap;
+        }
+        @media (min-width: 768px) {
+            .v-bar-container { height: 350px; gap: 16px; }
+            .v-bar-group { max-width: 80px; }
+            .v-bar-label { font-size: 13px; }
+            .v-bar-value { font-size: 15px; top: -28px; }
+        }
     </style>
 </head>
 
@@ -93,15 +137,13 @@
     <!-- CUSTOM PASSWORD MODAL -->
     <div id="adminModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] hidden items-center justify-center p-4 transition-opacity duration-300">
         <div id="adminModalBox" class="bg-[#1C1C1E] border border-white/10 p-8 rounded-[24px] shadow-2xl max-w-sm w-full text-center transform scale-95 transition-transform duration-300 cubic-bezier(0.16, 1, 0.3, 1)">
-            <div class="text-4xl mb-4 text-[#007AFF]"><i class="fa-solid fa-lock"></i></div>
-            <h3 class="text-xl font-semibold text-white mb-1">Akses Admin</h3>
-            <p class="text-[#8E8E93] text-[13px] mb-6">Masukkan PIN untuk mode pengeditan.</p>
-            
-            <input type="password" id="adminPassword" placeholder="••••" class="w-full px-4 py-3 bg-[#2C2C2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 text-center text-white text-2xl tracking-[0.5em] mb-6 transition-all">
-            
+            <div class="text-4xl mb-4 text-[#FF3B30]"><i class="fa-solid fa-user-shield"></i></div>
+            <h3 class="text-xl font-semibold text-white mb-1">Super Admin</h3>
+            <p class="text-[#8E8E93] text-[13px] mb-6">Masukkan PIN otorisasi.</p>
+            <input type="password" id="adminPassword" placeholder="••••" class="w-full px-4 py-3 bg-[#2C2C2E] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF3B30]/50 text-center text-white text-2xl tracking-[0.5em] mb-6 transition-all">
             <div class="flex gap-3">
-                <button onclick="closeAdminModal()" class="flex-1 bg-[#2C2C2E] hover:bg-[#3A3A3C] text-[#007AFF] py-3 rounded-xl font-medium transition-colors text-[15px]">Batal</button>
-                <button onclick="verifyAdmin()" class="flex-1 ios-btn-primary py-3 rounded-xl font-semibold transition-colors text-[15px]">Masuk</button>
+                <button onclick="closeAdminModal()" class="flex-1 bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white py-3 rounded-xl font-medium transition-colors text-[15px]">Batal</button>
+                <button onclick="verifyAdmin()" class="flex-1 bg-[#FF3B30] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]">Akses</button>
             </div>
         </div>
     </div>
@@ -112,100 +154,185 @@
             <div id="confirmIcon" class="text-4xl mb-4 text-[#007AFF]"><i class="fa-solid fa-circle-question"></i></div>
             <h3 class="text-xl font-semibold text-white mb-1">Konfirmasi</h3>
             <p id="confirmMessage" class="text-[#8E8E93] text-[13px] mb-6">Apakah Anda yakin?</p>
-            
             <div class="flex gap-3">
-                <button onclick="closeConfirmModal()" class="flex-1 bg-[#2C2C2E] hover:bg-[#3A3A3C] text-[#007AFF] py-3 rounded-xl font-medium transition-colors text-[15px]">Batal</button>
+                <button onclick="closeConfirmModal()" class="flex-1 bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white py-3 rounded-xl font-medium transition-colors text-[15px]">Batal</button>
                 <button id="confirmYesBtn" onclick="executePendingAction()" class="flex-1 ios-btn-primary py-3 rounded-xl font-semibold transition-colors text-[15px]">Ya</button>
             </div>
         </div>
     </div>
 
     <!-- MAIN APP WRAPPER -->
-    <div class="w-full max-w-3xl">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+    <div class="w-full max-w-4xl">
+        <div class="text-center mb-6">
+            <div class="admin-indicator hidden text-[#FF3B30] text-xs font-bold tracking-widest uppercase mb-3 animate-pulse">
+                <i class="fa-solid fa-unlock-keyhole"></i> Super Admin Mode
+            </div>
+            
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-2">
                 CG Maps Challenge
             </h1>
-            <p class="text-[#8E8E93] text-sm md:text-[15px]">Kumpulkan Kelipatan 5 Poin & Tukarkan dengan hadiah!</p>
+            <p class="text-[#8E8E93] text-sm md:text-base">Mengejar bintang, membangun kepercayaan.</p>
         </div>
 
-        <!-- iOS SEGMENTED CONTROL (TABS) -->
-        <div class="flex p-1 bg-[#1C1C1E] rounded-full max-w-sm mx-auto mb-8 border border-white/5">
-            <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="flex-1 py-2 text-[13px] md:text-sm font-semibold rounded-full bg-[#636366] text-white shadow-sm transition-all">
-                Leaderboard
-            </button>
-            <button onclick="switchTab('input')" id="btn-input" class="flex-1 py-2 text-[13px] md:text-sm font-medium text-[#8E8E93] hover:text-white transition-all bg-transparent">
-                Tambah Poin
-            </button>
-        </div>
-
-        <!-- TAB LEADERBOARD -->
-        <div id="tab-leaderboard" class="ios-card p-4 md:p-8 rounded-[32px] w-full transition-opacity duration-300">
-            <div class="flex justify-between items-center mb-6 md:mb-8 px-2 md:px-0">
-                <h2 class="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
-                    <i class="fa-solid fa-trophy text-[#FFD60A]"></i> Peringkat
-                </h2>
-                <button onclick="toggleAdminMode()" class="text-[#8E8E93] hover:text-[#007AFF] transition-colors cursor-pointer text-lg" title="Mode Admin">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
+        <div class="flex flex-col md:flex-row justify-center items-center gap-3 mb-8 bg-[#1C1C1E] p-3 rounded-2xl md:rounded-full border border-white/5 mx-auto w-fit shadow-lg">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-[#8E8E93] uppercase tracking-wider pl-2">Dari</span>
+                <input type="date" id="dateStart" class="ios-input px-3 py-1.5 text-white rounded-full text-sm outline-none font-medium cursor-pointer">
             </div>
+            <div class="hidden md:block text-[#636366]"><i class="fa-solid fa-arrow-right"></i></div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-[#8E8E93] uppercase tracking-wider pl-2">Sampai</span>
+                <input type="date" id="dateEnd" class="ios-input px-3 py-1.5 text-white rounded-full text-sm outline-none font-medium cursor-pointer">
+            </div>
+            <button onclick="applyDateFilter()" class="w-full md:w-auto bg-[#007AFF] hover:bg-[#0A84FF] text-white px-5 py-2 rounded-full text-sm font-bold transition-all mt-2 md:mt-0 shadow-md">
+                Terapkan
+            </button>
+            <!-- TOMBOL SIMULASI DUMMY DATA -->
+            <button onclick="runSimulation()" class="w-full md:w-auto bg-purple-600 hover:bg-purple-500 text-white px-5 py-2 rounded-full text-sm font-bold transition-all mt-2 md:mt-0 shadow-md flex items-center justify-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Simulasi
+            </button>
+        </div>
 
+        <!-- Tiga Segmented Control (Tabs) -->
+        <div class="flex p-1 bg-[#1C1C1E] rounded-full max-w-lg mx-auto mb-8 border border-white/5 overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('master')" id="btn-master" class="flex-1 py-2 px-3 text-[12px] md:text-sm font-semibold rounded-full bg-[#636366] text-white shadow-sm transition-all whitespace-nowrap">
+                🏆 Pusat
+            </button>
+            <button onclick="switchTab('divisi')" id="btn-divisi" class="flex-1 py-2 px-3 text-[12px] md:text-sm font-medium text-[#8E8E93] hover:text-white transition-all bg-transparent whitespace-nowrap">
+                👥 Divisi
+            </button>
+            <button onclick="switchTab('input')" id="btn-input" class="flex-1 py-2 px-3 text-[12px] md:text-sm font-medium text-[#8E8E93] hover:text-white transition-all bg-transparent whitespace-nowrap">
+                ➕ Setor Poin
+            </button>
+        </div>
+
+        <!-- TAB 1: MASTER (PUSAT - GRAFIK VERTIKAL) -->
+        <div id="tab-master" class="ios-card p-6 md:p-10 rounded-[32px] w-full transition-opacity duration-300">
+            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Klasemen Cabang</h2>
+            <p class="text-[#8E8E93] text-sm mb-6" id="master-subtitle">Total akumulasi ulasan berdasarkan rentang waktu terpilih.</p>
+            
             <div id="loading" class="text-center py-10 text-[15px] font-medium text-[#8E8E93] animate-pulse">
-                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-[#007AFF]"></i> Menyinkronkan data...
+                <i class="fa-solid fa-circle-notch fa-spin mr-2 text-[#007AFF]"></i> Menyinkronkan satelit data...
             </div>
 
-            <div id="leaderboard-list" class="space-y-3 md:space-y-4"></div>
+            <!-- Area Grafik Vertical Bar -->
+            <div id="master-chart" class="w-full hidden">
+                <div class="v-bar-container" id="v-bar-wrapper">
+                    <!-- Bars generated via JS -->
+                </div>
+            </div>
         </div>
 
-        <!-- TAB INPUT -->
+        <!-- TAB 2: DIVISI (INDIVIDU) -->
+        <div id="tab-divisi" class="ios-card p-4 md:p-8 rounded-[32px] w-full hidden-tab transition-opacity duration-300">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 class="text-xl md:text-2xl font-bold tracking-tight whitespace-nowrap">
+                    <i class="fa-solid fa-users text-white mr-2"></i> Peringkat Individu
+                </h2>
+                <!-- Dropdown Filter Cabang -->
+                <select id="branchFilter" onchange="renderDivisiList()" class="ios-input px-3 py-1.5 text-white rounded-lg text-sm outline-none w-full md:w-40 font-semibold cursor-pointer border border-[#3A3A3C]">
+                    <option value="Online">Online</option>
+                    <option value="CG">CG</option>
+                    <option value="Graha">Graha</option>
+                    <option value="Galuh">Galuh</option>
+                    <option value="Purwakarta">Purwakarta</option>
+                    <option value="Cianjur">Cianjur</option>
+                </select>
+            </div>
+
+            <div id="cg-info" class="mb-6 p-3 bg-[#007AFF]/10 border border-[#007AFF]/20 rounded-xl text-[13px] text-[#007AFF] font-medium flex items-center gap-2 hidden">
+                <i class="fa-solid fa-circle-info"></i> Khusus divisi CG, kumpulkan kelipatan 5 poin untuk mencairkan hadiah!
+            </div>
+
+            <div id="divisi-list" class="space-y-3 md:space-y-4"></div>
+        </div>
+
+        <!-- TAB 3: INPUT -->
         <div id="tab-input" class="ios-card p-6 md:p-10 rounded-[32px] w-full hidden-tab transition-opacity duration-300">
             <h2 class="text-xl md:text-2xl font-bold tracking-tight mb-2 text-center">Staging Area</h2>
-            <p class="text-[#8E8E93] text-sm text-center mb-8">Setor link review Google Maps kamu di sini untuk 1 poin.</p>
+            <p class="text-[#8E8E93] text-sm text-center mb-8">Setor link review Google Maps untuk poin divisi Anda.</p>
 
             <form id="reviewForm" class="space-y-5 max-w-md mx-auto">
                 <div>
-                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama Lengkap</label>
-                    <input type="text" id="inputName" required placeholder="Budi Susanto" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
+                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Pilih Cabang Anda <span class="text-[#FF3B30]">*</span></label>
+                    <select id="inputBranch" required class="ios-input w-full px-4 py-3.5 text-white rounded-xl text-[15px] outline-none font-semibold cursor-pointer border border-[#3A3A3C]">
+                        <option value="" disabled selected hidden>Pilih cabang...</option>
+                        <option value="Online">Online</option>
+                        <option value="CG">CG</option>
+                        <option value="Graha">Graha</option>
+                        <option value="Galuh">Galuh</option>
+                        <option value="Purwakarta">Purwakarta</option>
+                        <option value="Cianjur">Cianjur</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama User <span class="text-[#FF3B30]">*</span></label>
+                    <input type="text" id="inputName" required placeholder="Imad Prakoso" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
+                </div>
+                <div>
+                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama Akun Konsumen (Reviewer) <span class="text-[#FF3B30]">*</span></label>
+                    <input type="text" id="inputAccount" required placeholder="Rakabuming Raka" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none border border-emerald-500/30 focus:border-emerald-500">
+                    <p class="text-[11px] text-[#636366] mt-1.5 ml-1"><i class="fa-solid fa-shield-halved"></i> Validasi anti-duplikat membaca nama ini.</p>
                 </div>
                 <div>
                     <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Link Review Maps <span class="text-[#FF3B30]">*</span></label>
                     <input type="url" id="inputLink" required placeholder="https://goo.gl/maps/..." class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
                 </div>
-                <div>
-                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Screenshot Bukti <span class="text-[#636366]">(opsional)</span></label>
-                    <input type="file" id="inputImage" accept="image/*" class="ios-input w-full px-4 py-2.5 text-white rounded-xl text-[13px] outline-none file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-[12px] file:font-medium file:bg-[#007AFF]/10 file:text-[#007AFF] hover:file:bg-[#007AFF]/20 cursor-pointer transition-all">
-                </div>
-                <button type="submit" id="submitBtn" class="w-full ios-btn-primary mt-6 py-3.5 rounded-xl font-semibold text-[16px]">
-                    Kirim & Dapatkan Poin
+                <button type="submit" id="submitBtn" class="w-full ios-btn-primary mt-6 py-3.5 rounded-xl font-semibold text-[16px] shadow-lg shadow-[#007AFF]/20">
+                    Kirim & Sumbang Poin
                 </button>
             </form>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxEkkorYYko93Ihip3Cyi1HsiSM2NAaIFbKiU9b1BgQBEFI9XQjd8lPL1n7tjDcCpbGAg/exec";
-        let globalData = []; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwk6jLTWGyxEND8F-FYa7UUzZ6a5Ry1_Wa0Z6X6xuKZTeQn3APp2-o6Og9CvVeW62kBlQ/exec";
+        
+        let rawData = []; 
+        let filteredData = {}; 
+        let filterStart = null;
+        let filterEnd = null;
+
+        function initCalendar() {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            
+            document.getElementById('dateStart').value = formatDate(startOfMonth);
+            document.getElementById('dateEnd').value = formatDate(now);
+            
+            filterStart = startOfMonth;
+            filterEnd = now;
+            filterEnd.setHours(23, 59, 59, 999);
+        }
+
+        window.onload = function() {
+            initCalendar();
+            if (window.location.hash === '#admin') setTimeout(toggleAdminMode, 500);
+            fetchData();
+        }
+
+        window.addEventListener('hashchange', function() {
+            if(window.location.hash === '#admin' && !document.body.classList.contains('admin-mode-on')) {
+                toggleAdminMode();
+            }
+        });
 
         function switchTab(tabName) {
-            const tabLeaderboard = document.getElementById('tab-leaderboard');
-            const tabInput = document.getElementById('tab-input');
-            const btnLeaderboard = document.getElementById('btn-leaderboard');
-            const btnInput = document.getElementById('btn-input');
+            const tabs = ['master', 'divisi', 'input'];
+            const activeClass = "flex-1 py-2 px-3 text-[12px] md:text-sm font-semibold rounded-full bg-[#636366] text-white shadow-sm transition-all whitespace-nowrap";
+            const inactiveClass = "flex-1 py-2 px-3 text-[12px] md:text-sm font-medium text-[#8E8E93] hover:text-white transition-all bg-transparent whitespace-nowrap";
 
-            const activeClass = "flex-1 py-2 text-[13px] md:text-sm font-semibold rounded-full bg-[#636366] text-white shadow-sm transition-all";
-            const inactiveClass = "flex-1 py-2 text-[13px] md:text-sm font-medium text-[#8E8E93] hover:text-white transition-all bg-transparent";
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden-tab');
+                document.getElementById(`btn-${t}`).className = inactiveClass;
+            });
 
-            if (tabName === 'leaderboard') {
-                tabLeaderboard.classList.remove('hidden-tab');
-                tabInput.classList.add('hidden-tab');
-                btnLeaderboard.className = activeClass;
-                btnInput.className = inactiveClass;
-                fetchData(); 
-            } else {
-                tabLeaderboard.classList.add('hidden-tab');
-                tabInput.classList.remove('hidden-tab');
-                btnLeaderboard.className = inactiveClass;
-                btnInput.className = activeClass;
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden-tab');
+            document.getElementById(`btn-${tabName}`).className = activeClass;
+            
+            if(tabName === 'master') {
+                setTimeout(animateBars, 100); 
             }
         }
 
@@ -213,110 +340,266 @@
             const msgBox = document.getElementById('msgBox');
             msgBox.innerText = text;
             msgBox.className = `msg-box show ${type === 'error' ? 'msg-error' : 'msg-success'}`;
-            setTimeout(() => { msgBox.classList.remove('show'); }, 3000);
+            setTimeout(() => { msgBox.classList.remove('show'); }, 4000);
         }
 
         async function fetchData() {
             const loadingEl = document.getElementById('loading');
-            const listEl = document.getElementById('leaderboard-list');
+            const chartEl = document.getElementById('master-chart');
             
             loadingEl.style.display = 'block';
-            loadingEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2 text-[#007AFF]"></i> Menyinkronkan data...';
-            listEl.innerHTML = '';
+            chartEl.classList.add('hidden');
 
             try {
                 const response = await fetch(API_URL + "?nocache=" + new Date().getTime());
-                const textData = await response.text();
-                
-                try {
-                    globalData = JSON.parse(textData);
-                    renderLeaderboard(globalData);
-                } catch (jsonErr) {
-                    console.error("Bukan JSON:", textData);
-                    loadingEl.innerHTML = "⚠️ Akses ditolak. Pastikan URL API benar dan pengaturan Apps Script diatur ke 'Anyone'.";
-                }
+                rawData = await response.json();
+                processFilteredData();
             } catch (error) {
-                console.error("Gagal Fetch:", error);
-                loadingEl.innerHTML = "⚠️ Gagal tersambung ke server Apple/Google. Cek koneksi internet.";
+                showMessage("Gagal menyinkronkan data.", "error");
+                loadingEl.innerHTML = "⚠️ Terjadi kesalahan jaringan.";
             }
         }
 
-        function renderLeaderboard(data) {
-            document.getElementById('loading').style.display = 'none';
-            const listEl = document.getElementById('leaderboard-list');
-            listEl.innerHTML = '';
-
-            if (data.length === 0) {
-                listEl.innerHTML = '<div class="text-center py-10 text-[#8E8E93] font-medium text-[15px]">Belum ada data peserta.</div>';
+        function applyDateFilter() {
+            const startVal = document.getElementById('dateStart').value;
+            const endVal = document.getElementById('dateEnd').value;
+            
+            if(!startVal || !endVal) {
+                showMessage("Mohon pilih rentang tanggal yang valid.", "error");
                 return;
             }
 
-            data.forEach((participant, index) => {
+            filterStart = new Date(startVal);
+            filterStart.setHours(0, 0, 0, 0);
+            
+            filterEnd = new Date(endVal);
+            filterEnd.setHours(23, 59, 59, 999);
+
+            if(filterStart > filterEnd) {
+                showMessage("Tanggal awal tidak boleh melebih tanggal akhir.", "error");
+                return;
+            }
+
+            processFilteredData();
+        }
+
+        function processFilteredData() {
+            filteredData = {
+                master: [], 
+                branches: {} 
+            };
+
+            const branchesList = ["Online", "CG", "Graha", "Galuh", "Purwakarta", "Cianjur"];
+            
+            branchesList.forEach(b => {
+                filteredData.branches[b] = { total: 0, users: {} };
+            });
+
+            rawData.forEach(row => {
+                const rowDate = new Date(row.date);
+                if (rowDate >= filterStart && rowDate <= filterEnd) {
+                    const b = row.branch;
+                    const name = row.name;
+                    
+                    if (filteredData.branches[b]) {
+                        if (!filteredData.branches[b].users[name]) {
+                            filteredData.branches[b].users[name] = { score: 0, claims: 0, accounts: [] };
+                        }
+                        
+                        filteredData.branches[b].users[name].score += row.score;
+                        filteredData.branches[b].users[name].claims += row.claims;
+                        if (row.account) filteredData.branches[b].users[name].accounts.push(row.account);
+                        
+                        filteredData.branches[b].total += row.score;
+                    }
+                }
+            });
+
+            branchesList.forEach(b => {
+                const branchTotal = filteredData.branches[b].total;
+                filteredData.master.push({ branch: b, totalScore: branchTotal });
+                
+                const userArr = [];
+                const usersObj = filteredData.branches[b].users;
+                
+                for (let uName in usersObj) {
+                    if (usersObj[uName].score > 0) { 
+                        let totalScore = usersObj[uName].score;
+                        let claimed = usersObj[uName].claims;
+                        let available = Math.floor(totalScore / 5) - claimed;
+                        
+                        userArr.push({
+                            name: uName,
+                            score: totalScore,
+                            claimedCount: claimed,
+                            availableClaims: available > 0 ? available : 0,
+                            accountsStr: usersObj[uName].accounts.join("||")
+                        });
+                    }
+                }
+                
+                userArr.sort((a,b) => b.score - a.score);
+                filteredData.branches[b].userList = userArr;
+            });
+
+            filteredData.master.sort((a,b) => b.totalScore - a.totalScore);
+            renderMasterChart();
+        }
+
+        // FUNGSI SIMULASI DUMMY DATA UNTUK TEST ANIMASI
+        function runSimulation() {
+            filteredData.master = [
+                { branch: "Purwakarta", totalScore: 166 },
+                { branch: "Galuh", totalScore: 122 },
+                { branch: "Graha", totalScore: 81 },
+                { branch: "Online", totalScore: 75 },
+                { branch: "CG", totalScore: 70 },
+                { branch: "Cianjur", totalScore: 61 }
+            ];
+
+            // Setup mock data agar tab Divisi tidak error
+            const mockUsers = [
+                {name: "Dummy Pro", score: 50, claimedCount: 5, availableClaims: 5, accountsStr: ""},
+                {name: "Dummy Noob", score: 10, claimedCount: 0, availableClaims: 2, accountsStr: ""}
+            ];
+            
+            const branchesList = ["Online", "CG", "Graha", "Galuh", "Purwakarta", "Cianjur"];
+            branchesList.forEach(b => {
+                if(!filteredData.branches[b]) filteredData.branches[b] = {};
+                filteredData.branches[b].userList = mockUsers;
+            });
+
+            renderMasterChart();
+            showMessage("🚀 Simulasi Grafik Diaktifkan!", "success");
+        }
+
+        function renderMasterChart() {
+            const chartEl = document.getElementById('master-chart');
+            const loadingEl = document.getElementById('loading');
+            const wrapper = document.getElementById('v-bar-wrapper');
+            
+            loadingEl.style.display = 'none';
+            chartEl.classList.remove('hidden');
+            wrapper.innerHTML = '';
+
+            const masterData = filteredData.master;
+            
+            if (masterData.length === 0 || masterData[0].totalScore === 0) {
+                wrapper.innerHTML = '<div class="text-[#8E8E93] text-sm self-center pb-10">Belum ada data pada rentang tanggal ini.</div>';
+                renderDivisiList(); 
+                return;
+            }
+
+            const maxScore = masterData[0].totalScore;
+            
+            const gradients = {
+                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", // Gold
+                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     // Blue
+                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   // Green
+                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   // Purple
+                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",// Pink
+                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    // Orange
+            };
+
+            masterData.forEach((item, index) => {
+                const heightPercent = maxScore > 0 ? (item.totalScore / maxScore) * 100 : 0;
+                const finalHeight = heightPercent > 0 ? heightPercent : 1; 
+                const bgStyle = gradients[item.branch] || "linear-gradient(180deg, #8E8E93 0%, #636366 100%)";
+                const crown = index === 0 && item.totalScore > 0 ? '👑' : ''; 
+
+                const tiangHtml = `
+                    <div class="v-bar-group">
+                        <div class="v-bar-fill" style="background: ${bgStyle};" data-height="${finalHeight}%">
+                            <span class="v-bar-value drop-shadow-md">${item.totalScore}</span>
+                        </div>
+                        <div class="v-bar-label">${item.branch} ${crown}</div>
+                    </div>
+                `;
+                wrapper.insertAdjacentHTML('beforeend', tiangHtml);
+            });
+
+            setTimeout(animateBars, 50); 
+
+            if(masterData.length > 0 && masterData[0].totalScore > 0) {
+                const topBranch = masterData[0].branch;
+                document.getElementById('branchFilter').value = topBranch;
+            }
+
+            renderDivisiList();
+        }
+
+        function animateBars() {
+            const bars = document.querySelectorAll('.v-bar-fill');
+            bars.forEach(bar => { 
+                bar.offsetHeight; // Force reflow
+                bar.style.height = bar.getAttribute('data-height'); 
+                bar.classList.add('animated'); 
+            });
+        }
+
+        function renderDivisiList() {
+            const selectedBranch = document.getElementById('branchFilter').value;
+            const listEl = document.getElementById('divisi-list');
+            const cgInfo = document.getElementById('cg-info');
+            listEl.innerHTML = '';
+
+            if (selectedBranch === 'CG') cgInfo.classList.remove('hidden');
+            else cgInfo.classList.add('hidden');
+
+            const branchUsers = filteredData.branches[selectedBranch]?.userList || [];
+
+            if (branchUsers.length === 0) {
+                listEl.innerHTML = '<div class="text-center py-10 text-[#8E8E93] font-medium text-[15px]">Tidak ada data ulasan pada rentang waktu ini.</div>';
+                return;
+            }
+
+            branchUsers.forEach((participant, index) => {
                 const rank = index + 1;
                 let extraClasses = 'rank-other';
                 let icon = `<span class="text-lg md:text-xl font-bold text-[#636366]">#${rank}</span>`;
-                let statusBadge = '';
                 
-                // Rank Styling & Badges (Lencana)
-                if (rank === 1) { 
-                    extraClasses = 'rank-1'; 
-                    icon = '<span class="text-xl md:text-2xl text-[#FFD60A]"><i class="fa-solid fa-crown"></i></span>'; 
-                    statusBadge = '<span class="bg-[#FFD60A]/10 text-[#FFD60A] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#FFD60A]/20 whitespace-nowrap">🥇 Juara Bertahan</span>';
-                } else if (rank === 2) { 
-                    extraClasses = 'rank-2'; 
-                    icon = '<span class="text-xl md:text-2xl text-[#D1D1D6]"><i class="fa-solid fa-medal"></i></span>'; 
-                    statusBadge = '<span class="bg-[#D1D1D6]/10 text-[#D1D1D6] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#D1D1D6]/20 whitespace-nowrap">🥈 Posisi Aman</span>';
-                } else if (rank === 3) { 
-                    extraClasses = 'rank-3'; 
-                    icon = '<span class="text-xl md:text-2xl text-[#FF9F0A]"><i class="fa-solid fa-award"></i></span>'; 
-                    statusBadge = '<span class="bg-[#FF9F0A]/10 text-[#FF9F0A] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#FF9F0A]/20 whitespace-nowrap">🥉 Mengejar</span>';
-                } else {
-                    statusBadge = '<span class="bg-[#FF2D55]/10 text-[#FF2D55] px-2.5 py-1 rounded-md text-[10px] md:text-xs font-semibold border border-[#FF2D55]/20 whitespace-nowrap">🔥 On Fire</span>';
-                }
+                if (rank === 1) { extraClasses = 'rank-1'; icon = '<span class="text-xl md:text-2xl text-[#FFD60A]"><i class="fa-solid fa-crown"></i></span>'; } 
+                else if (rank === 2) { extraClasses = 'rank-2'; icon = '<span class="text-xl md:text-2xl text-[#D1D1D6]"><i class="fa-solid fa-medal"></i></span>'; } 
+                else if (rank === 3) { extraClasses = 'rank-3'; icon = '<span class="text-xl md:text-2xl text-[#FF9F0A]"><i class="fa-solid fa-award"></i></span>'; }
 
-                // Apple Style Claim Badge (Data Kelipatan)
-                let claimColor = participant.availableClaims > 0 ? "text-[#34C759] font-semibold" : "text-[#8E8E93]";
-                let pulseClass = participant.availableClaims > 0 ? "border-[#34C759]/30 bg-[#34C759]/10 shadow-sm" : "border-white/5 bg-[#2C2C2E]";
+                let claimDisplayHtml = '';
+                let adminClaimBtn = '';
                 
-                let claimDisplayHtml = `
-                    <div class="mt-1 text-[11px] px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 w-fit border ${pulseClass}">
-                        <span class="text-[#EBEBF5] whitespace-nowrap">Claim: <strong class="text-[#007AFF]">${participant.claimedCount}x</strong></span>
-                        <span class="text-[#636366] text-[9px]">|</span>
-                        <span class="${claimColor} whitespace-nowrap">Sisa: <strong>${participant.availableClaims}x</strong></span>
-                    </div>
-                `;
+                if (selectedBranch === 'CG') {
+                    let claimColor = participant.availableClaims > 0 ? "text-[#34C759] font-semibold animate-pulse" : "text-[#8E8E93]";
+                    let pulseClass = participant.availableClaims > 0 ? "border-[#34C759]/30 bg-[#34C759]/10 shadow-sm" : "border-white/5 bg-[#2C2C2E]";
+                    
+                    claimDisplayHtml = `
+                        <div class="mt-1.5 text-[11px] px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 w-fit border ${pulseClass}">
+                            <span class="text-[#EBEBF5] whitespace-nowrap">Claim: <strong class="text-[#007AFF]">${participant.claimedCount}x</strong></span>
+                            <span class="text-[#636366] text-[9px]">|</span>
+                            <span class="${claimColor} whitespace-nowrap">Sisa: <strong>${participant.availableClaims}x</strong></span>
+                        </div>
+                    `;
+
+                    if (participant.availableClaims > 0) {
+                        adminClaimBtn = `
+                            <button onclick="sendAdminAction('${participant.name}', 'claim', '${selectedBranch}')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0" title="ACC 1 Reward">
+                                <i class="fa-solid fa-gift"></i> ACC
+                            </button>
+                        `;
+                    }
+                }
 
                 const safeName = participant.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-
-                // Admin Controls (iOS Style Buttons)
-                let adminClaimBtn = '';
-                if (participant.availableClaims > 0) {
-                    adminClaimBtn = `
-                        <button onclick="sendAdminAction('${safeName}', 'claim')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0" title="ACC 1 Reward">
-                            <i class="fa-solid fa-gift"></i> ACC
-                        </button>
-                    `;
-                }
-
                 const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(participant.name)}&backgroundColor=transparent`;
 
-                // Layout Baru Responsif (Apple Style)
                 const cardHtml = `
                     <div class="flex flex-col md:flex-row p-3 md:p-4 rounded-2xl ${extraClasses} transition-all gap-3 md:gap-5 relative overflow-hidden items-start md:items-center justify-between">
-                        
                         <div class="flex items-center gap-3 w-full md:w-auto md:flex-1">
                             <div class="w-8 text-center shrink-0 flex justify-center">${icon}</div>
                             <img src="${avatarUrl}" alt="avatar" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#2C2C2E] border border-white/10 shrink-0">
                             
                             <div class="flex flex-col min-w-0 flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[16px] md:text-lg font-semibold text-white truncate leading-tight">${participant.name}</span>
-                                    <div class="hidden md:block">${statusBadge}</div>
-                                </div>
-                                <div class="md:hidden mt-1">${statusBadge}</div>
-                                <div class="hidden md:block mt-0.5">${claimDisplayHtml}</div>
+                                <span class="text-[16px] md:text-lg font-semibold text-white truncate leading-tight">${participant.name}</span>
+                                <div class="hidden md:block">${claimDisplayHtml}</div>
                             </div>
-
+                            
                             <div class="md:hidden text-[#007AFF] font-bold text-xl shrink-0 flex items-baseline gap-0.5">
                                 ${participant.score}<span class="text-[10px] font-medium text-[#8E8E93] pb-0.5">pts</span>
                             </div>
@@ -327,17 +610,16 @@
                         </div>
 
                         <div class="flex items-center justify-end w-full md:w-auto gap-3 mt-1 pt-3 md:pt-0 border-t border-white/5 md:border-0">
-                            
                             <div class="hidden md:flex text-[#007AFF] font-bold text-2xl shrink-0 items-baseline gap-1">
                                 ${participant.score} <span class="text-[12px] font-medium text-[#8E8E93] pb-1">pts</span>
                             </div>
                             
                             <div class="admin-controls flex-row items-center justify-end gap-1.5 w-full md:w-auto">
                                 ${adminClaimBtn}
-                                <button onclick="sendAdminAction('${safeName}', 'decrease')" class="bg-[#FF9F0A]/10 text-[#FF9F0A] hover:bg-[#FF9F0A] hover:text-white w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0" title="Kurangi Poin (-1)">
+                                <button onclick="sendAdminAction('${safeName}', 'decrease', '${selectedBranch}')" class="bg-[#FF9F0A]/10 text-[#FF9F0A] hover:bg-[#FF9F0A] hover:text-white w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0" title="Kurangi Poin (-1)">
                                     <i class="fa-solid fa-minus text-sm"></i>
                                 </button>
-                                <button onclick="sendAdminAction('${safeName}', 'delete')" class="bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0" title="Hapus User">
+                                <button onclick="sendAdminAction('${safeName}', 'delete', '${selectedBranch}')" class="bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0" title="Hapus User">
                                     <i class="fa-solid fa-trash text-sm"></i>
                                 </button>
                             </div>
@@ -350,22 +632,29 @@
 
         document.getElementById('reviewForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+            const branchInput = document.getElementById('inputBranch').value;
             const nameInput = document.getElementById('inputName').value.trim();
+            const accountInput = document.getElementById('inputAccount').value.trim().toLowerCase();
             const linkInput = document.getElementById('inputLink').value.trim();
             const btn = document.getElementById('submitBtn');
 
             let isDuplicate = false;
             let submittedBy = "";
-            for (let p of globalData) {
-                if (p.links && p.links.includes(linkInput)) {
-                    isDuplicate = true;
-                    submittedBy = p.name;
-                    break;
+            const branchUsers = filteredData.branches[branchInput]?.userList || [];
+            
+            for (let p of branchUsers) {
+                if (p.accountsStr) {
+                    let userAccounts = p.accountsStr.split("||");
+                    if (userAccounts.includes(accountInput)) {
+                        isDuplicate = true;
+                        submittedBy = p.name;
+                        break;
+                    }
                 }
             }
 
             if (isDuplicate) {
-                showMessage(`Link sudah dipakai oleh ${submittedBy}`, 'error');
+                showMessage(`Mohon maaf, ulasan dari akun "${accountInput}" telah diklaim sebelumnya oleh ${submittedBy}.`, 'error');
                 return;
             }
 
@@ -377,29 +666,31 @@
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'add', name: nameInput, link: linkInput })
+                    body: JSON.stringify({ action: 'add', branch: branchInput, name: nameInput, link: linkInput, accountName: accountInput })
                 });
 
                 confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#007AFF', '#34C759', '#FFD60A'] });
-
-                showMessage('Poin berhasil ditambahkan', 'success');
+                showMessage('Poin berhasil ditambahkan!', 'success');
                 document.getElementById('reviewForm').reset();
-                setTimeout(() => { switchTab('leaderboard'); }, 2000);
+                
+                document.getElementById('branchFilter').value = branchInput;
+                setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
 
             } catch (error) {
-                showMessage('Gagal terhubung ke server', 'error');
+                showMessage('Menyinkronkan data...', 'success');
+                setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
             } finally {
-                btn.innerHTML = 'Kirim & Dapatkan Poin';
+                btn.innerHTML = 'Kirim & Sumbang Poin';
                 btn.disabled = false;
             }
         });
 
         function toggleAdminMode() { 
             const isAdminOn = document.body.classList.contains('admin-mode-on');
-            
             if (isAdminOn) {
                 document.body.classList.remove('admin-mode-on');
-                showMessage('Mode edit dimatikan', 'success');
+                window.history.pushState("", document.title, window.location.pathname + window.location.search);
+                showMessage('Mode Admin ditutup', 'success');
             } else {
                 const modal = document.getElementById('adminModal');
                 const box = document.getElementById('adminModalBox');
@@ -407,7 +698,6 @@
                 
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                
                 setTimeout(() => box.classList.replace('scale-95', 'scale-100'), 10);
                 pwInput.value = '';
                 pwInput.focus();
@@ -417,19 +707,15 @@
         function closeAdminModal() {
             const modal = document.getElementById('adminModal');
             const box = document.getElementById('adminModalBox');
-            
             box.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 300);
+            window.history.pushState("", document.title, window.location.pathname + window.location.search);
         }
 
         function verifyAdmin() {
-            const pw = document.getElementById('adminPassword').value;
-            if (pw === "1155") {
+            if (document.getElementById('adminPassword').value === "1155") {
                 document.body.classList.add('admin-mode-on');
-                showMessage('Akses admin diberikan', 'success');
+                showMessage('Akses Admin diberikan', 'success');
                 closeAdminModal();
             } else {
                 showMessage('PIN tidak valid', 'error');
@@ -437,32 +723,25 @@
             }
         }
 
-        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') verifyAdmin();
-        });
-
         let pendingAdminAction = null;
 
-        function sendAdminAction(userName, actionType) {
+        function sendAdminAction(userName, actionType, branchName) {
             let confirmMsg = "";
             let iconHtml = '<i class="fa-solid fa-circle-question"></i>';
             let iconColor = 'text-[#007AFF]';
             let btnClass = 'flex-1 ios-btn-primary py-3 rounded-xl font-semibold transition-colors text-[15px]';
 
             if (actionType === 'delete') {
-                confirmMsg = `Hapus semua data untuk <strong>${userName}</strong>? Tindakan ini tidak dapat dibatalkan.`;
-                iconHtml = '<i class="fa-solid fa-trash"></i>';
-                iconColor = 'text-[#FF3B30]';
+                confirmMsg = `Hapus semua data untuk <strong>${userName}</strong> di divisi ${branchName}?`;
+                iconHtml = '<i class="fa-solid fa-trash"></i>'; iconColor = 'text-[#FF3B30]';
                 btnClass = 'flex-1 bg-[#FF3B30] hover:bg-[#D70015] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
             } else if (actionType === 'decrease') {
                 confirmMsg = `Kurangi 1 poin dari <strong>${userName}</strong>?`;
-                iconHtml = '<i class="fa-solid fa-minus"></i>';
-                iconColor = 'text-[#FF9F0A]';
+                iconHtml = '<i class="fa-solid fa-minus"></i>'; iconColor = 'text-[#FF9F0A]';
                 btnClass = 'flex-1 bg-[#FF9F0A] hover:bg-[#D08200] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
             } else if (actionType === 'claim') {
-                confirmMsg = `Catat pemberian 1 reward untuk <strong>${userName}</strong>?<br><span class="text-xs text-[#8E8E93] mt-2 block font-normal">Angka 'Sudah Claim' akan bertambah 1.</span>`;
-                iconHtml = '<i class="fa-solid fa-gift"></i>';
-                iconColor = 'text-[#34C759]';
+                confirmMsg = `Catat pemberian 1 reward untuk <strong>${userName}</strong>?`;
+                iconHtml = '<i class="fa-solid fa-gift"></i>'; iconColor = 'text-[#34C759]';
                 btnClass = 'flex-1 bg-[#34C759] hover:bg-[#248A3D] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
             }
 
@@ -479,12 +758,12 @@
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: actionType, name: userName })
+                        body: JSON.stringify({ action: actionType, name: userName, branch: branchName })
                     });
                     showMessage('Berhasil diperbarui', 'success');
                     setTimeout(fetchData, 1500); 
                 } catch (error) {
-                    showMessage('Gagal menyimpan', 'error');
+                    setTimeout(fetchData, 1500); 
                 }
             };
 
@@ -499,18 +778,11 @@
             const modal = document.getElementById('confirmModal');
             const box = document.getElementById('confirmModalBox');
             box.classList.replace('scale-100', 'scale-95');
-            setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-                pendingAdminAction = null;
-            }, 300);
+            setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); pendingAdminAction = null; }, 300);
         }
 
-        function executePendingAction() {
-            if (pendingAdminAction) pendingAdminAction();
-        }
+        function executePendingAction() { if (pendingAdminAction) pendingAdminAction(); }
 
-        fetchData();
     </script>
 </body>
 
