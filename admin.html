@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - CG Maps Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #000000; 
+            color: #F2F2F2; 
+            min-height: 100vh; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .ios-card {
+            background-color: #1C1C1E;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+        }
+
+        .ios-input { 
+            background-color: #2C2C2E; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            transition: all 0.2s ease;
+        }
+        
+        .ios-input:focus { 
+            border-color: #007AFF; 
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); 
+        }
+
+        .ios-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 30px;
+        }
+
+        .ios-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #3A3A3C;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #34C759;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Table Styles */
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        th { background-color: #2C2C2E; color: #8E8E93; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        
+        .msg-box { 
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%); 
+            z-index: 50; padding: 12px 24px; border-radius: 9999px; font-weight: 500; font-size: 14px;
+            backdrop-filter: blur(20px); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .msg-box.show { transform: translateX(-50%) translateY(0); }
+        .msg-error { background-color: rgba(255, 59, 48, 0.9); }
+        .msg-success { background-color: rgba(52, 199, 89, 0.9); }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+    <div id="msgBox" class="msg-box"></div>
+
+    <!-- LOCK SCREEN -->
+    <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
+        <div class="text-[#007AFF] text-6xl mb-6"><i class="fa-solid fa-shield-halved"></i></div>
+        <h2 class="text-2xl font-bold mb-2">Super Admin System</h2>
+        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia untuk melanjutkan.</p>
+        <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
+        <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Dashboard</button>
+    </div>
+
+    <!-- MAIN ADMIN WRAPPER -->
+    <div id="adminApp" class="w-full max-w-6xl hidden flex-col gap-6">
+        
+        <!-- HEADER -->
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white"><i class="fa-solid fa-server text-[#007AFF] mr-2"></i>Control Center</h1>
+                <p class="text-[#8E8E93] text-sm mt-1">Mengelola Data Keseluruhan Divisi Cipta Grafika</p>
+            </div>
+            <a href="index.html" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <i class="fa-solid fa-arrow-left mr-2"></i>Kembali ke Web
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- KOLOM KIRI: SETTINGS & QUICK STATS -->
+            <div class="flex flex-col gap-6">
+                <!-- Global Settings -->
+                <div class="ios-card p-6">
+                    <h3 class="text-lg font-semibold mb-4 border-b border-white/10 pb-3"><i class="fa-solid fa-sliders text-[#34C759] mr-2"></i>Pengaturan Cabang</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-medium text-white">Fitur Claim Reward</h4>
+                                <p class="text-[11px] text-[#8E8E93]">Aktifkan kelipatan 5 poin khusus CG</p>
+                            </div>
+                            <label class="ios-toggle">
+                                <input type="checkbox" checked id="toggleReward" onchange="saveSettings()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-3 border-t border-white/5">
+                            <div>
+                                <h4 class="font-medium text-white">Maintenance Mode</h4>
+                                <p class="text-[11px] text-[#8E8E93]">Kunci web dari input baru</p>
+                            </div>
+                            <label class="ios-toggle">
+                                <input type="checkbox" id="toggleMaintenance" onchange="saveSettings()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Tools -->
+                <div class="ios-card p-6">
+                    <h3 class="text-lg font-semibold mb-4 border-b border-white/10 pb-3"><i class="fa-solid fa-database text-[#FF9F0A] mr-2"></i>Database Tools</h3>
+                    
+                    <div class="space-y-3">
+                        <button onclick="downloadCSV()" class="w-full bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white py-3 rounded-xl text-sm font-medium flex justify-center items-center gap-2 transition-colors">
+                            <i class="fa-solid fa-download text-[#007AFF]"></i> Export ke CSV
+                        </button>
+                        <button onclick="confirmReset()" class="w-full bg-[#FF3B30]/10 hover:bg-[#FF3B30]/20 text-[#FF3B30] border border-[#FF3B30]/30 py-3 rounded-xl text-sm font-medium flex justify-center items-center gap-2 transition-colors mt-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Reset Poin (Awal Bulan)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOLOM KANAN: DATA MANAGEMENT -->
+            <div class="lg:col-span-2 ios-card p-6 overflow-hidden flex flex-col h-[700px]">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <h3 class="text-lg font-semibold"><i class="fa-solid fa-users-gear text-[#007AFF] mr-2"></i>Manajemen Data Peserta</h3>
+                    
+                    <!-- Filters -->
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <select id="filterDivisi" onchange="renderTable()" class="ios-input px-3 py-2 rounded-lg text-sm text-white w-full md:w-32 outline-none">
+                            <option value="All">Semua Divisi</option>
+                            <option value="CG">CG</option>
+                            <option value="Online">Online</option>
+                            <option value="Graha">Graha</option>
+                            <option value="Galuh">Galuh</option>
+                            <option value="Purwakarta">Purwakarta</option>
+                            <option value="Cianjur">Cianjur</option>
+                        </select>
+                        <input type="text" id="searchName" onkeyup="renderTable()" placeholder="Cari nama..." class="ios-input px-3 py-2 rounded-lg text-sm text-white w-full md:w-48 outline-none">
+                    </div>
+                </div>
+
+                <!-- TABLE CONTAINER -->
+                <div class="overflow-x-auto flex-1 border border-white/5 rounded-xl">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="sticky top-0 bg-[#2C2C2E] z-10">
+                            <tr>
+                                <th>Divisi</th>
+                                <th>Nama Peserta</th>
+                                <th>Total Poin</th>
+                                <th>Claimed</th>
+                                <th class="text-center">Aksi / Kontrol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Memuat database...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 flex justify-between items-center text-xs text-[#8E8E93]">
+                    <span id="totalRecords">Total: 0 Data</span>
+                    <button onclick="fetchAdminData()" class="hover:text-white transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i> Refresh Data</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Gunakan API yang sama dengan Web Utama
+        const API_URL = "https://script.google.com/macros/s/AKfycbydtGWuQdxy4JBavrD_MqtdE0xoc8dfNhQGyQWd40xs6DjavXj3zhlCPD9wkbT2OQHvww/exec";
+        let rawData = [];
+
+        // 1. SISTEM LOGIN
+        function checkPin() {
+            const pin = document.getElementById('pinInput').value;
+            if(pin === "1155") {
+                document.getElementById('lockScreen').style.display = 'none';
+                document.getElementById('adminApp').style.display = 'flex';
+                fetchAdminData();
+            } else {
+                showToast("PIN Salah! Akses ditolak.", "error");
+                document.getElementById('pinInput').value = "";
+            }
+        }
+
+        document.getElementById('pinInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPin();
+        });
+
+        function showToast(text, type) {
+            const box = document.getElementById('msgBox');
+            box.innerText = text;
+            box.className = `msg-box show ${type === 'error' ? 'msg-error' : 'msg-success'}`;
+            setTimeout(() => { box.classList.remove('show'); }, 3000);
+        }
+
+        // 2. FETCH DATA UNTUK ADMIN (Baca Semua Tab)
+        async function fetchAdminData() {
+            document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Sinkronisasi server...</td></tr>';
+            try {
+                // Di Apps Script, kita pastikan data yang dikirim adalah format agregat per orang, per cabang
+                const response = await fetch(API_URL + "?nocache=" + new Date().getTime());
+                const textData = await response.text();
+                rawData = JSON.parse(textData);
+                renderTable();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('adminTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Gagal memuat data dari server.</td></tr>';
+            }
+        }
+
+        // 3. RENDER TABEL (Dengan Filter & Search)
+        function renderTable() {
+            const filterDiv = document.getElementById('filterDivisi').value;
+            const searchKeyword = document.getElementById('searchName').value.toLowerCase();
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = '';
+
+            let filteredData = rawData.filter(p => {
+                const matchDivisi = filterDiv === 'All' || p.divisi === filterDiv;
+                const matchName = p.name.toLowerCase().includes(searchKeyword);
+                return matchDivisi && matchName;
+            });
+
+            document.getElementById('totalRecords').innerText = `Menampilkan ${filteredData.length} Data`;
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-10">Tidak ada data ditemukan.</td></tr>';
+                return;
+            }
+
+            // Gabungkan/akumulasikan data yang cabangnya sama dan namanya sama untuk tampilan tabel admin
+            // (Karena API utama mengirimkan per array object)
+            
+            // Urutkan abjad berdasarkan Divisi lalu Nama
+            filteredData.sort((a, b) => {
+                if(a.divisi < b.divisi) return -1;
+                if(a.divisi > b.divisi) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            filteredData.forEach(p => {
+                // Label Warna Divisi
+                let divColor = "bg-[#8E8E93]/20 text-[#8E8E93]";
+                if(p.divisi === "CG") divColor = "bg-[#007AFF]/20 text-[#007AFF]";
+                if(p.divisi === "Purwakarta") divColor = "bg-[#FF3B30]/20 text-[#FF3B30]";
+                if(p.divisi === "Galuh") divColor = "bg-[#AF52DE]/20 text-[#AF52DE]";
+
+                const safeName = p.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+                const tr = `
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                        <td><span class="${divColor} px-2.5 py-1 rounded-md text-[11px] font-bold">${p.divisi}</span></td>
+                        <td class="font-semibold text-white">${p.name}</td>
+                        <td class="text-[#34C759] font-bold">${p.score}</td>
+                        <td class="text-[#8E8E93]">${p.claimedCount}x</td>
+                        <td class="flex justify-center gap-2">
+                            <button onclick="adminAction('${safeName}', '${p.divisi}', 'decrease')" class="bg-[#FF9F0A]/10 text-[#FF9F0A] hover:bg-[#FF9F0A] hover:text-white w-8 h-8 rounded-md transition-colors" title="Kurangi 1 Poin"><i class="fa-solid fa-minus"></i></button>
+                            <button onclick="adminAction('${safeName}', '${p.divisi}', 'claim')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white w-8 h-8 rounded-md transition-colors" title="ACC Claim (+1)"><i class="fa-solid fa-gift"></i></button>
+                            <button onclick="adminAction('${safeName}', '${p.divisi}', 'delete')" class="bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white w-8 h-8 rounded-md transition-colors" title="Hapus User"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', tr);
+            });
+        }
+
+        // 4. EKSEKUSI AKSI KE SERVER
+        async function adminAction(name, divisi, action) {
+            let msg = "";
+            if(action === 'delete') msg = `Hapus semua data ${name} di divisi ${divisi}?`;
+            if(action === 'decrease') msg = `Kurangi 1 poin dari ${name} (${divisi})?`;
+            if(action === 'claim') msg = `ACC 1 Reward untuk ${name} (${divisi})?`;
+
+            if(!confirm(msg)) return;
+
+            showToast("Memproses ke server...", "success");
+            try {
+                // Memanfaatkan API POST existing (butuh nambah param divisi di backend jika multi-sheet)
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, name: name, divisi: divisi }) // Backend wajib nangkep divisi
+                });
+                showToast("Berhasil! Refresh data.", "success");
+                setTimeout(fetchAdminData, 1500);
+            } catch (err) {
+                showToast("Gagal tersambung", "error");
+            }
+        }
+
+        // 5. FITUR DUMMY (Bisa disambung ke backend nantinya)
+        function saveSettings() {
+            showToast("Pengaturan disimpan (Simulasi)", "success");
+        }
+
+        function downloadCSV() {
+            // Logic Export CSV sederhana
+            let csvContent = "data:text/csv;charset=utf-8,Divisi,Nama,Poin,Claimed\n";
+            rawData.forEach(row => {
+                csvContent += `${row.divisi},${row.name},${row.score},${row.claimedCount}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "CG_Maps_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Mendownload CSV...", "success");
+        }
+
+        function confirmReset() {
+            if(confirm("PERINGATAN BAHAYA!\n\nApakah Anda yakin ingin MERESET POIN SEMUA ORANG menjadi 0? Tindakan ini tidak bisa dibatalkan!")) {
+                let password = prompt("Ketik 'RESET' untuk melanjutkan:");
+                if(password === "RESET") {
+                    showToast("Fungsi ini membutuhkan update Backend Script.", "error");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
