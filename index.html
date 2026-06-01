@@ -4,9 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CG Maps Challenge</title>
+    <title>Rating Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tesseract.js untuk OCR gratis membaca nama reviewer langsung dari gambar screenshot -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -76,57 +78,40 @@
         .rank-other { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); }
 
         .v-bar-container {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-            height: 250px; 
-            padding-top: 30px;
-            gap: 8px;
+            display: flex; align-items: flex-end; justify-content: space-around;
+            height: 250px; padding-top: 30px; gap: 8px;
         }
         .v-bar-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end; /* FIX: Memaksa isi batang mulai dari bawah */
-            height: 100%; /* FIX: Membutuhkan tinggi 100% dari container */
-            flex: 1;
-            max-width: 60px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            height: 100%; flex: 1; max-width: 60px; 
         }
         .v-bar-fill {
-            width: 100%;
-            background-color: #007AFF; 
-            border-radius: 6px 6px 0 0;
-            height: 0%; 
-            transition: height 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-            position: relative;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+            width: 100%; background-color: #007AFF; border-radius: 6px 6px 0 0;
+            height: 0%; transition: height 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative; box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
         }
         .v-bar-value {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 13px;
-            font-weight: 700;
-            color: #FFFFFF;
-            opacity: 0;
-            transition: opacity 1.5s ease;
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            font-size: 13px; font-weight: 700; color: #FFFFFF; opacity: 0; transition: opacity 1.5s ease;
         }
         .v-bar-fill.animated .v-bar-value { opacity: 1; }
-        .v-bar-label {
-            margin-top: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #8E8E93;
-            text-align: center;
-            white-space: nowrap;
-        }
+        .v-bar-label { margin-top: 12px; font-size: 11px; font-weight: 600; color: #8E8E93; text-align: center; white-space: nowrap; }
+        
         @media (min-width: 768px) {
             .v-bar-container { height: 350px; gap: 16px; }
             .v-bar-group { max-width: 80px; }
             .v-bar-label { font-size: 13px; }
             .v-bar-value { font-size: 15px; top: -28px; }
         }
+
+        /* AI Chat Bubble Styles */
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+        .chat-user { background-color: #007AFF; color: white; border-bottom-right-radius: 4px; align-self: flex-end; }
+        .chat-ai { background-color: #2C2C2E; color: #F2F2F2; border-bottom-left-radius: 4px; align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); }
+        .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: #8E8E93; border-radius: 50%; margin: 0 2px; animation: typing 1.4s infinite ease-in-out both; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 
@@ -169,11 +154,12 @@
             </div>
             
             <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-2">
-                Rating Maps Challenges
+                Rating Maps Challenge
             </h1>
             <p class="text-[#8E8E93] text-sm md:text-base">Mengejar bintang, membangun kepercayaan.</p>
         </div>
 
+        <!-- KALENDER FILTER -->
         <div class="flex flex-col md:flex-row justify-center items-center gap-3 mb-8 bg-[#1C1C1E] p-3 rounded-2xl md:rounded-full border border-white/5 mx-auto w-fit shadow-lg">
             <div class="flex items-center gap-2">
                 <span class="text-xs font-semibold text-[#8E8E93] uppercase tracking-wider pl-2">Dari</span>
@@ -243,70 +229,144 @@
             <div id="divisi-list" class="space-y-3 md:space-y-4"></div>
         </div>
 
-        <!-- TAB 3: INPUT -->
+        <!-- TAB 3: INPUT (DENGAN 2 MODE) -->
         <div id="tab-input" class="ios-card p-6 md:p-10 rounded-[32px] w-full hidden-tab transition-opacity duration-300">
-            <h2 class="text-xl md:text-2xl font-bold tracking-tight mb-2 text-center">Staging Area</h2>
-            <p class="text-[#8E8E93] text-sm text-center mb-8">Setor link review Google Maps untuk poin divisi Anda.</p>
-
-            <form id="reviewForm" class="space-y-5 max-w-md mx-auto">
-                <div>
-                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Pilih Cabang Anda <span class="text-[#FF3B30]">*</span></label>
-                    <select id="inputBranch" required class="ios-input w-full px-4 py-3.5 text-white rounded-xl text-[15px] outline-none font-semibold cursor-pointer border border-[#3A3A3C]">
-                        <option value="" disabled selected hidden>Pilih cabang...</option>
-                        <option value="Online">Online</option>
-                        <option value="CG">CG</option>
-                        <option value="Graha">Graha</option>
-                        <option value="Galuh">Galuh</option>
-                        <option value="Purwakarta">Purwakarta</option>
-                        <option value="Cianjur">Cianjur</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama User <span class="text-[#FF3B30]">*</span></label>
-                    <input type="text" id="inputName" required placeholder="Imad Prakoso" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
-                </div>
-                <div>
-                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama Akun Konsumen (Reviewer) <span class="text-[#FF3B30]">*</span></label>
-                    <input type="text" id="inputAccount" required placeholder="Rakabuming Raka" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none border border-emerald-500/30 focus:border-emerald-500">
-                    <p class="text-[11px] text-[#636366] mt-1.5 ml-1"><i class="fa-solid fa-shield-halved"></i> Validasi anti-duplikat membaca nama ini.</p>
-                </div>
-                <div>
-                    <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Link Review Maps <span class="text-[#FF3B30]">*</span></label>
-                    <input type="url" id="inputLink" required placeholder="https://goo.gl/maps/..." class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
-                </div>
-                <button type="submit" id="submitBtn" class="w-full ios-btn-primary mt-6 py-3.5 rounded-xl font-semibold text-[16px] shadow-lg shadow-[#007AFF]/20">
-                    Kirim & Sumbang Poin
+            
+            <!-- TOGGLE MODE MANUAL / AI -->
+            <div class="flex p-1 bg-[#2C2C2E] rounded-full max-w-[250px] mx-auto mb-8 border border-white/5">
+                <button onclick="setMode('manual')" id="btn-mode-manual" class="flex-1 py-1.5 text-[12px] font-bold rounded-full bg-[#636366] text-white transition-all">
+                    🔗 Manual
                 </button>
-            </form>
+                <button onclick="setMode('ai')" id="btn-mode-ai" class="flex-1 py-1.5 text-[12px] font-bold text-[#8E8E93] transition-all bg-transparent flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[#AF52DE]"></i> AI Setor
+                </button>
+            </div>
+
+            <h2 id="form-title" class="text-xl md:text-2xl font-bold tracking-tight mb-2 text-center">Staging Area</h2>
+            <p id="form-subtitle" class="text-[#8E8E93] text-sm text-center mb-8">Setor link review Google Maps untuk poin divisi Anda.</p>
+
+            <!-- BUNGKUSAN FORM (AKAN DI-HIDE KALAU LAGI CHATTING) -->
+            <div id="form-wrapper">
+                <form id="reviewForm" class="space-y-5 max-w-md mx-auto">
+                    <!-- BLOK MODE MANUAL -->
+                    <div id="blok-manual" class="space-y-5">
+                        <div>
+                            <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Pilih Cabang Anda <span class="text-[#FF3B30]">*</span></label>
+                            <select id="inputBranch" required class="ios-input w-full px-4 py-3.5 text-white rounded-xl text-[15px] outline-none font-semibold cursor-pointer border border-[#3A3A3C]">
+                                <option value="" disabled selected hidden>Pilih cabang...</option>
+                                <option value="Online">Online</option>
+                                <option value="CG">CG</option>
+                                <option value="Graha">Graha</option>
+                                <option value="Galuh">Galuh</option>
+                                <option value="Purwakarta">Purwakarta</option>
+                                <option value="Cianjur">Cianjur</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama User <span class="text-[#FF3B30]">*</span></label>
+                            <input type="text" id="inputName" required placeholder="Imad Prakoso" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Nama Akun Google Reviewer <span class="text-[#FF3B30]">*</span></label>
+                            <input type="text" id="inputAccount" required placeholder="Rakabuming Raka" class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none border border-emerald-500/30 focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[13px] font-medium text-[#8E8E93] mb-1.5 ml-1">Link Review Maps <span class="text-[#FF3B30]">*</span></label>
+                            <input type="url" id="inputLink" required placeholder="https://goo.gl/maps/..." class="ios-input w-full px-4 py-3.5 text-white placeholder-[#636366] rounded-xl text-[15px] outline-none">
+                        </div>
+                    </div>
+
+                    <!-- BLOK MODE AI (SIMPLE DRAG & DROP & PASTE) -->
+                    <div id="blok-ai" class="space-y-5 hidden">
+                        <!-- Drag & Drop Container -->
+                        <div id="dropzone" class="border-2 border-dashed border-white/10 hover:border-[#AF52DE]/50 bg-white/[0.02] hover:bg-[#AF52DE]/5 p-6 rounded-2xl text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center min-h-[160px] gap-2">
+                            <input type="file" id="inputImage" accept="image/*" class="hidden">
+                            <i id="dropzone-icon" class="fa-solid fa-cloud-arrow-up text-3xl text-[#8E8E93] transition-colors"></i>
+                            <div class="text-[13px] font-semibold text-white" id="dropzone-text">Seret & lepas screenshot, atau klik untuk memilih file</div>
+                            <div class="text-[11px] text-[#8E8E93]" id="dropzone-sub">Mendukung Paste Gambar (Ctrl+V) langsung di halaman ini</div>
+                            <!-- Image Preview Thumbnail -->
+                            <div id="image-preview-container" class="hidden relative mt-2 shrink-0">
+                                <img id="image-preview" src="#" alt="Screenshot Review" class="max-h-24 rounded-lg object-contain border border-white/20 shadow-md">
+                                <button type="button" onclick="clearSelectedImage(event)" class="absolute -top-2 -right-2 bg-[#FF3B30] text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center hover:bg-[#D70015] shadow-md"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[13px] font-medium text-[#AF52DE] mb-1.5 ml-1"><i class="fa-solid fa-message"></i> Pesan ke AI Assistant <span class="text-[#FF3B30]">*</span></label>
+                            <textarea id="inputPesanAI" rows="3" placeholder="Contoh: Aku Nayla Reva, mau setor 1 Review untuk team aku CG ya" class="ios-input w-full px-4 py-3 text-white placeholder-[#636366] rounded-xl text-[14px] outline-none border border-[#AF52DE]/30 focus:border-[#AF52DE]"></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full ios-btn-primary mt-6 py-3.5 rounded-xl font-semibold text-[16px] shadow-lg shadow-[#007AFF]/20 transition-all duration-300">
+                        Kirim & Sumbang Poin
+                    </button>
+                </form>
+            </div>
+
+            <!-- CHAT BUBBLE SIMULASI AI (Sembunyi Awalnya) -->
+            <div id="ai-chat-interface" class="max-w-md mx-auto hidden flex-col gap-4 bg-[#1C1C1E] rounded-2xl">
+                <!-- Chat User -->
+                <div class="flex items-end justify-end gap-2 mt-4">
+                    <div id="chat-user-text" class="chat-bubble chat-user shadow-md font-medium">...</div>
+                </div>
+                
+                <!-- Chat AI Loading -->
+                <div id="ai-typing" class="flex items-end justify-start gap-2 mb-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#AF52DE] to-[#5E2A84] flex items-center justify-center shrink-0 shadow-lg shadow-[#AF52DE]/20"><i class="fa-solid fa-robot text-white text-[14px]"></i></div>
+                    <div class="chat-bubble chat-ai typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+
+                <!-- Chat AI Selesai -->
+                <div id="ai-response" class="flex items-end justify-start gap-2 hidden mb-4">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#AF52DE] to-[#5E2A84] flex items-center justify-center shrink-0 shadow-lg shadow-[#AF52DE]/20"><i class="fa-solid fa-robot text-white text-[14px]"></i></div>
+                    <div id="chat-ai-text" class="chat-bubble chat-ai shadow-md font-medium">...</div>
+                </div>
+
+                <button onclick="resetFormAI()" id="btn-setor-lagi" class="w-full bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white py-3 mt-4 rounded-xl font-semibold text-[14px] transition-colors hidden">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Setor Lagi
+                </button>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // GANTI DENGAN URL API BARU JIKA BERUBAH
         const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
         
         let rawData = []; 
         let filteredData = {}; 
         let filterStart = null;
         let filterEnd = null;
+        let inputMode = 'manual'; // Default mode form
 
         function initCalendar() {
             const now = new Date();
+            // Start Date = Tanggal 1 di bulan dan tahun yang sama saat ini
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            // Konversi ke format YYYY-MM-DD untuk kalender HTML
+            // Agar zona waktu konsisten, gunakan penyesuaian offset lokal sebelum konversi ISO
+            const offset = startOfMonth.getTimezoneOffset() * 60000;
+            const localStart = new Date(startOfMonth.getTime() - offset);
+            const localNow = new Date(now.getTime() - offset);
+
             const formatDate = (date) => date.toISOString().split('T')[0];
             
-            // Set DARI dan SAMPAI ke tanggal hari ini (Today)
-            document.getElementById('dateStart').value = formatDate(now);
-            document.getElementById('dateEnd').value = formatDate(now);
+            document.getElementById('dateStart').value = formatDate(localStart);
+            document.getElementById('dateEnd').value = formatDate(localNow);
             
-            filterStart = new Date(now);
-            filterStart.setHours(0, 0, 0, 0); // Mulai dari awal hari ini
-
-            filterEnd = new Date(now);
-            filterEnd.setHours(23, 59, 59, 999); // Sampai akhir hari ini
+            filterStart = startOfMonth;
+            // End Date mencakup sampai jam 23:59 hari ini
+            filterEnd = now;
+            filterEnd.setHours(23, 59, 59, 999);
         }
 
         window.onload = function() {
             initCalendar();
+            setupDragAndDrop();
+            setupPasteSupport();
             if (window.location.hash === '#admin') setTimeout(toggleAdminMode, 500);
             fetchData();
         }
@@ -342,6 +402,200 @@
             setTimeout(() => { msgBox.classList.remove('show'); }, 4000);
         }
 
+        // ==========================================
+        // FITUR MODE INPUT (MANUAL VS AI)
+        // ==========================================
+        function setMode(mode) {
+            inputMode = mode;
+            const btnManual = document.getElementById('btn-mode-manual');
+            const btnAI = document.getElementById('btn-mode-ai');
+            const blokManual = document.getElementById('blok-manual');
+            const blokAI = document.getElementById('blok-ai');
+            const inputLink = document.getElementById('inputLink');
+            const inputAccount = document.getElementById('inputAccount');
+            const inputName = document.getElementById('inputName');
+            const inputBranch = document.getElementById('inputBranch');
+            const inputPesanAI = document.getElementById('inputPesanAI');
+            const submitBtn = document.getElementById('submitBtn');
+            const formTitle = document.getElementById('form-title');
+
+            const activeBtnClass = "flex-1 py-1.5 text-[12px] font-bold rounded-full bg-[#636366] text-white transition-all";
+            const inactiveBtnClass = "flex-1 py-1.5 text-[12px] font-bold text-[#8E8E93] transition-all bg-transparent flex items-center justify-center gap-1";
+            const inactiveManualClass = "flex-1 py-1.5 text-[12px] font-bold text-[#8E8E93] transition-all bg-transparent";
+
+            if (mode === 'manual') {
+                btnManual.className = activeBtnClass;
+                btnAI.className = inactiveBtnClass;
+                blokManual.classList.remove('hidden');
+                blokAI.classList.add('hidden');
+                
+                // Set requirements
+                inputLink.required = true;
+                inputAccount.required = true;
+                inputName.required = true;
+                inputBranch.required = true;
+                inputPesanAI.required = false;
+
+                formTitle.innerText = "Staging Area";
+                submitBtn.className = "w-full ios-btn-primary mt-6 py-3.5 rounded-xl font-semibold text-[16px] shadow-lg shadow-[#007AFF]/20 transition-all duration-300";
+                submitBtn.innerHTML = "Kirim & Sumbang Poin";
+            } else {
+                btnManual.className = inactiveManualClass;
+                btnAI.className = activeBtnClass.replace('bg-[#636366]', 'bg-[#AF52DE]'); // Warna ungu untuk AI
+                blokManual.classList.add('hidden');
+                blokAI.classList.remove('hidden');
+                
+                // Set requirements
+                inputLink.required = false;
+                inputAccount.required = false;
+                inputName.required = false;
+                inputBranch.required = false;
+                inputPesanAI.required = true;
+
+                formTitle.innerHTML = "<span class='text-[#AF52DE]'><i class='fa-solid fa-wand-magic-sparkles'></i> AI Assistant</span>";
+                submitBtn.className = "w-full bg-[#AF52DE] hover:bg-[#9941C8] text-white mt-6 py-3.5 rounded-xl font-semibold text-[16px] shadow-lg shadow-[#AF52DE]/30 transition-all duration-300";
+                submitBtn.innerHTML = "Minta AI Validasi";
+            }
+        }
+
+        // ==========================================
+        // FITUR DRAG & DROP & PASTE SCREENSHOT
+        // ==========================================
+        function setupDragAndDrop() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('inputImage');
+
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('border-[#AF52DE]', 'bg-[#AF52DE]/10');
+            });
+
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('border-[#AF52DE]', 'bg-[#AF52DE]/10');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('border-[#AF52DE]', 'bg-[#AF52DE]/10');
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    fileInput.files = files;
+                    handlePreview(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    handlePreview(fileInput.files[0]);
+                }
+            });
+        }
+
+        function setupPasteSupport() {
+            window.addEventListener('paste', (e) => {
+                if (inputMode !== 'ai') return; // Hanya aktif saat Mode AI dipilih
+                
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let item of items) {
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        const file = item.getAsFile();
+                        const fileInput = document.getElementById('inputImage');
+                        
+                        // Buat FileList virtual agar bisa di-assign ke file input
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+
+                        handlePreview(file);
+                        showMessage("Gambar dari clipboard berhasil ditempel! 📸", "success");
+                        break;
+                    }
+                }
+            });
+        }
+
+        function handlePreview(file) {
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+            const icon = document.getElementById('dropzone-icon');
+            const text = document.getElementById('dropzone-text');
+            const subText = document.getElementById('dropzone-sub');
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                icon.classList.add('hidden');
+                text.classList.add('hidden');
+                subText.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSelectedImage(event) {
+            event.stopPropagation(); // Cegah dropzone terpicu klik ulang
+            const fileInput = document.getElementById('inputImage');
+            const previewContainer = document.getElementById('image-preview-container');
+            const icon = document.getElementById('dropzone-icon');
+            const text = document.getElementById('dropzone-text');
+            const subText = document.getElementById('dropzone-sub');
+
+            fileInput.value = '';
+            previewContainer.classList.add('hidden');
+            icon.classList.remove('hidden');
+            text.classList.remove('hidden');
+            subText.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // PARSING KALIMAT AI (NLP SIMULASI)
+        // ==========================================
+        function parseAiMessage(text) {
+            const cleanText = text.toLowerCase().trim();
+            const branches = ["online", "cg", "graha", "galuh", "purwakarta", "cianjur"];
+            
+            // 1. Deteksi Cabang
+            let detectedBranch = null;
+            for (let b of branches) {
+                if (cleanText.includes(b)) {
+                    detectedBranch = b === "cg" ? "CG" : b.charAt(0).toUpperCase() + b.slice(1);
+                    break;
+                }
+            }
+
+            if (!detectedBranch) return null;
+
+            // 2. Deteksi Nama (Cari kecocokan dengan data lama dulu)
+            let detectedName = null;
+            const branchUsers = filteredData.branches[detectedBranch]?.userList || [];
+            
+            for (let user of branchUsers) {
+                if (cleanText.includes(user.name.toLowerCase())) {
+                    detectedName = user.name;
+                    break;
+                }
+            }
+
+            // Fallback: Gunakan regex jika nama baru pertama kali input
+            if (!detectedName) {
+                // Mencari pola "aku [nama]," atau "saya [nama] mau" atau "nama saya [nama]"
+                const match = text.match(/(?:aku|saya|nama|atas\s+nama)\s+([a-zA-Z\s]{2,20})/i);
+                if (match && match[1]) {
+                    // Bersihkan dari sisa kata hubung
+                    detectedName = match[1].replace(/\b(mau|setor|dari|untuk|team|tim)\b/gi, "").trim();
+                    // Kapitalisasi kata
+                    detectedName = detectedName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                }
+            }
+
+            return { branch: detectedBranch, name: detectedName };
+        }
+
+        // ==========================================
+        // DATABASE LOKAL & FETCH
+        // ==========================================
         async function fetchData() {
             const loadingEl = document.getElementById('loading');
             const chartEl = document.getElementById('master-chart');
@@ -395,12 +649,9 @@
             });
 
             rawData.forEach(row => {
-                // FALLBACK TANGGAL
-                // Kalau ada data lama di excel yang kolom tanggalnya kosong, paksa dia masuk jadi tahun 2000
-                // Biar dia kebaca sama filter kalender kita dan 218 poin lu kaga ilang!
                 let rowDate = new Date(row.date);
                 if (isNaN(rowDate.getTime())) {
-                    rowDate = new Date('2026-05-01T00:00:00Z'); 
+                    rowDate = new Date('2000-01-01T00:00:00Z'); 
                 }
 
                 if (rowDate >= filterStart && rowDate <= filterEnd) {
@@ -409,10 +660,11 @@
                     
                     if (filteredData.branches[b]) {
                         if (!filteredData.branches[b].users[name]) {
-                            filteredData.branches[b].users[name] = { score: 0, accounts: [] };
+                            filteredData.branches[b].users[name] = { score: 0, claims: 0, accounts: [] };
                         }
                         
                         filteredData.branches[b].users[name].score += row.score;
+                        filteredData.branches[b].users[name].claims += row.claims;
                         if (row.account) filteredData.branches[b].users[name].accounts.push(row.account);
                         
                         filteredData.branches[b].total += row.score;
@@ -429,9 +681,15 @@
                 
                 for (let uName in usersObj) {
                     if (usersObj[uName].score > 0) { 
+                        let totalScore = usersObj[uName].score;
+                        let claimed = usersObj[uName].claims;
+                        let available = Math.floor(totalScore / 5) - claimed;
+                        
                         userArr.push({
                             name: uName,
-                            score: usersObj[uName].score,
+                            score: totalScore,
+                            claimedCount: claimed,
+                            availableClaims: available > 0 ? available : 0,
                             accountsStr: usersObj[uName].accounts.join("||")
                         });
                     }
@@ -456,8 +714,8 @@
             ];
 
             const mockUsers = [
-                {name: "Dummy Pro", score: 50, accountsStr: ""},
-                {name: "Dummy Noob", score: 10, accountsStr: ""}
+                {name: "Dummy Pro", score: 50, claimedCount: 5, availableClaims: 5, accountsStr: ""},
+                {name: "Dummy Noob", score: 10, claimedCount: 0, availableClaims: 2, accountsStr: ""}
             ];
             
             const branchesList = ["Online", "CG", "Graha", "Galuh", "Purwakarta", "Cianjur"];
@@ -488,14 +746,13 @@
             }
 
             const maxScore = masterData[0].totalScore;
-            
             const gradients = {
-                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", // Gold
-                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     // Blue
-                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   // Green
-                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   // Purple
-                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",// Pink
-                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    // Orange
+                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", 
+                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     
+                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   
+                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   
+                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",
+                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    
             };
 
             masterData.forEach((item, index) => {
@@ -521,14 +778,13 @@
                 const topBranch = masterData[0].branch;
                 document.getElementById('branchFilter').value = topBranch;
             }
-
             renderDivisiList();
         }
 
         function animateBars() {
             const bars = document.querySelectorAll('.v-bar-fill');
             bars.forEach(bar => { 
-                bar.offsetHeight; // Force reflow
+                bar.offsetHeight; 
                 bar.style.height = bar.getAttribute('data-height'); 
                 bar.classList.add('animated'); 
             });
@@ -558,7 +814,6 @@
                 const safeName = participant.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                 const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(participant.name)}&backgroundColor=transparent`;
 
-                // Struktur UI Bersih TANPA INFO CLAIM
                 const cardHtml = `
                     <div class="flex flex-col md:flex-row p-3 md:p-4 rounded-2xl ${extraClasses} transition-all gap-3 md:gap-5 relative overflow-hidden items-start md:items-center justify-between">
                         <div class="flex items-center gap-3 w-full md:w-auto md:flex-1">
@@ -594,38 +849,196 @@
             });
         }
 
-        document.getElementById('reviewForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const branchInput = document.getElementById('inputBranch').value;
-            const nameInput = document.getElementById('inputName').value.trim();
-            const accountInput = document.getElementById('inputAccount').value.trim().toLowerCase();
-            const linkInput = document.getElementById('inputLink').value.trim();
-            const btn = document.getElementById('submitBtn');
-
-            let isDuplicate = false;
-            let submittedBy = "";
-            const branchUsers = filteredData.branches[branchInput]?.userList || [];
+        // ==========================================
+        // DETEKSI DAN PEMBACAAN OCR REVIEWS
+        // ==========================================
+        function parseReviewerNameFromOcr(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            let reviewer = "Google Reviewer 🤖";
             
-            for (let p of branchUsers) {
-                if (p.accountsStr) {
-                    let userAccounts = p.accountsStr.split("||");
-                    if (userAccounts.includes(accountInput)) {
-                        isDuplicate = true;
-                        submittedBy = p.name;
+            // Pola Maps seperti "menit lalu", "jam lalu", "ago", "★" dsb
+            const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
+            
+            for (let i = 0; i < lines.length; i++) {
+                if (timePattern.test(lines[i])) {
+                    // Baris sebelum baris rating/tanggal ini adalah nama reviewer!
+                    if (i > 0) {
+                        let potentialName = lines[i - 1];
+                        // Hilangkan baris aneh yang tidak logis sebagai nama manusia
+                        if (!potentialName.includes("Google") && !potentialName.includes("Share") && potentialName.length > 2) {
+                            reviewer = potentialName;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Fallback: Jika tidak ketemu pola waktu, gunakan baris pertama non-aplikatif
+            if (reviewer === "Google Reviewer 🤖" && lines.length > 0) {
+                for (let line of lines) {
+                    if (!line.includes("Google") && !line.includes("Share") && !line.includes("Maps") && line.length > 2) {
+                        reviewer = line;
                         break;
                     }
                 }
             }
+            
+            // BERSHKAN SISA KARAKTER OCR: Hapus huruf tunggal aneh di depan (seperti "Q ", "l ", "| ") 
+            // dan bersihkan dari karakter non-alfanumerik di ujungnya.
+            reviewer = reviewer.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
+            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); // Menghapus "Q Slice of Romance" menjadi "Slice of Romance"
+            
+            return reviewer.trim();
+        }
 
-            if (isDuplicate) {
-                showMessage(`Mohon maaf, ulasan dari akun "${accountInput}" telah diklaim sebelumnya oleh ${submittedBy}.`, 'error');
-                return;
+        // ==========================================
+        // LOGIKA SUBMIT DAN CHAT AI
+        // ==========================================
+        const aiTemplates = [
+            "Wah cakep banget {nama}! Ulasan dari {reviewer} terdeteksi bintang 5 sempurna. Sekarang total review kamu ada {total} lho! 🎉",
+            "Mantap {nama}, bukti review dari {reviewer} berhasil tervalidasi! Total koleksi poin kamu udah tembus {total}. Gas terus! 🔥",
+            "Verifikasi AI Meta sukses ✅. Akun Google {reviewer} terdaftar atas namamu. Total poin: {total}.",
+            "Bip bop! OCR valid 🤖. Gambar reviewer {reviewer} terkonfirmasi. {nama} melesat dengan total {total} poin!"
+        ];
+
+        document.getElementById('reviewForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+
+            // Persiapan Variabel sesuai Mode
+            let branchInput = "";
+            let nameInput = "";
+            let accountInput = "";
+            let linkInput = "";
+            let pesanAI = "";
+
+            if (inputMode === 'manual') {
+                branchInput = document.getElementById('inputBranch').value;
+                nameInput = document.getElementById('inputName').value.trim();
+                accountInput = document.getElementById('inputAccount').value.trim();
+                linkInput = document.getElementById('inputLink').value.trim();
+
+                // Validasi Anti Duplikat Manual
+                let isDuplicate = false;
+                let submittedBy = "";
+                const branchUsers = filteredData.branches[branchInput]?.userList || [];
+                
+                for (let p of branchUsers) {
+                    if (p.accountsStr) {
+                        let userAccounts = p.accountsStr.split("||");
+                        if (userAccounts.includes(accountInput.toLowerCase())) {
+                            isDuplicate = true;
+                            submittedBy = p.name;
+                            break;
+                        }
+                    }
+                }
+
+                if (isDuplicate) {
+                    showMessage(`Mohon maaf, ulasan dari akun "${accountInput}" telah diklaim sebelumnya oleh ${submittedBy}.`, 'error');
+                    return;
+                }
+
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim...';
+                btn.disabled = true;
+
+            } else {
+                // KONDISI AI MODE
+                pesanAI = document.getElementById('inputPesanAI').value.trim();
+                
+                // Parse Nama dan Cabang dari pesan chat secara dinamis
+                const parsedResult = parseAiMessage(pesanAI);
+                
+                if (!parsedResult || !parsedResult.branch || !parsedResult.name) {
+                    showMessage("AI bingung! Pastikan kamu menuliskan Nama dan Cabang di pesan (Cth: 'Aku Nayla dari CG...').", "error");
+                    return;
+                }
+
+                // Cek ketersediaan file gambar
+                const fileInput = document.getElementById('inputImage');
+                if (fileInput.files.length === 0) {
+                    showMessage("Mohon sertakan screenshot bukti review Maps terlebih dahulu! 📸", "error");
+                    return;
+                }
+
+                branchInput = parsedResult.branch;
+                nameInput = parsedResult.name;
+                linkInput = "Diinput via AI 🤖";
+
+                // Sembunyikan Form, Tampilkan UI Chat
+                document.getElementById('form-wrapper').classList.add('hidden');
+                document.getElementById('form-title').classList.add('hidden');
+                document.getElementById('form-subtitle').classList.add('hidden');
+                
+                const chatUI = document.getElementById('ai-chat-interface');
+                chatUI.classList.remove('hidden');
+                chatUI.classList.add('flex');
+                
+                // Isi pesan user
+                document.getElementById('chat-user-text').innerText = pesanAI;
+
+                // EKSEKUSI PEMINDAIAN OCR (TESSERACT.JS)
+                const imageFile = fileInput.files[0];
+                const ocrBubble = document.querySelector('#ai-typing .chat-bubble');
+                
+                ocrBubble.innerHTML = `<span></span><span></span><span></span> AI sedang memindai nama reviewer dari gambar...`;
+
+                try {
+                    const ocrResult = await Tesseract.recognize(
+                        imageFile,
+                        'eng',
+                        { logger: m => {
+                            if (m.status === 'recognizing text') {
+                                ocrBubble.innerHTML = `<span></span><span></span><span></span> Menganalisis screenshot (${Math.round(m.progress * 100)}%)...`;
+                            }
+                          }
+                        }
+                    );
+                    
+                    // Deteksi nama reviewer sesungguhnya dari OCR
+                    accountInput = parseReviewerNameFromOcr(ocrResult.data.text);
+
+                    // ==========================================
+                    // PERBAIKAN: VALIDASI ANTI DUPLIKAT VIA AI LEBIH KETAT
+                    // ==========================================
+                    let isDuplicate = false;
+                    let submittedBy = "";
+                    const branchUsers = filteredData.branches[branchInput]?.userList || [];
+                    
+                    // Fungsi pembersih string agar "Q Slice of Romance" = "slice of romance"
+                    const cleanString = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const cleanAccountInput = cleanString(accountInput);
+
+                    for (let p of branchUsers) {
+                        if (p.accountsStr) {
+                            let userAccounts = p.accountsStr.split("||");
+                            for (let existingAccount of userAccounts) {
+                                // Cek menggunakan string yang sudah dibersihkan sepenuhnya
+                                if (cleanString(existingAccount) === cleanAccountInput || cleanString(existingAccount).includes(cleanAccountInput) || cleanAccountInput.includes(cleanString(existingAccount))) {
+                                    isDuplicate = true;
+                                    submittedBy = p.name;
+                                    break;
+                                }
+                            }
+                        }
+                        if(isDuplicate) break;
+                    }
+
+                    if (isDuplicate) {
+                        // Jika duplikat, kembalikan ke form awal dan beri peringatan
+                        resetFormAI();
+                        showMessage(`Ulasan dari akun "${accountInput}" sudah diklaim oleh ${submittedBy}! ❌`, 'error');
+                        return; // Hentikan proses ke database
+                    }
+
+                } catch (ocrErr) {
+                    console.error("OCR Gagal:", ocrErr);
+                    accountInput = "Reviewer Terdeteksi via AI 🤖"; // Fallback name
+                }
             }
 
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim...';
-            btn.disabled = true;
-
             try {
+                // Tembak Data ke Google Sheets
                 await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -633,22 +1046,83 @@
                     body: JSON.stringify({ action: 'add', branch: branchInput, name: nameInput, link: linkInput, accountName: accountInput })
                 });
 
-                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#007AFF', '#34C759', '#FFD60A'] });
-                showMessage('Poin berhasil ditambahkan!', 'success');
-                document.getElementById('reviewForm').reset();
-                
-                document.getElementById('branchFilter').value = branchInput;
-                setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
+                if (inputMode === 'manual') {
+                    // Manual Selesai
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#007AFF', '#34C759', '#FFD60A'] });
+                    showMessage('Poin berhasil ditambahkan!', 'success');
+                    document.getElementById('reviewForm').reset();
+                    document.getElementById('branchFilter').value = branchInput;
+                    setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
+                } else {
+                    // AI Selesai - Kalkulasi Poin Baru untuk Pesan AI
+                    const branchUsers = filteredData.branches[branchInput]?.userList || [];
+                    let currentUser = branchUsers.find(u => u.name.toLowerCase() === nameInput.toLowerCase());
+                    let newTotal = currentUser ? currentUser.score + 1 : 1;
+
+                    // Ambil Pesan Acak & Replace Variabel (Termasuk nama reviewer asli)
+                    const randomMsg = aiTemplates[Math.floor(Math.random() * aiTemplates.length)];
+                    const finalMsg = randomMsg
+                        .replace(/{nama}/g, nameInput)
+                        .replace(/{reviewer}/g, `<strong>${accountInput}</strong>`)
+                        .replace(/{total}/g, newTotal);
+
+                    // Tampilkan Balasan Chat AI
+                    setTimeout(() => {
+                        document.getElementById('ai-typing').classList.add('hidden');
+                        document.getElementById('ai-response').classList.remove('hidden');
+                        document.getElementById('chat-ai-text').innerHTML = finalMsg;
+                        document.getElementById('btn-setor-lagi').classList.remove('hidden');
+                        
+                        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#AF52DE', '#FFD60A'] });
+                        
+                        // Update background data diam-diam
+                        fetchData(); 
+                    }, 1000);
+                }
 
             } catch (error) {
                 showMessage('Menyinkronkan data...', 'success');
                 setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
             } finally {
-                btn.innerHTML = 'Kirim & Sumbang Poin';
-                btn.disabled = false;
+                if(inputMode === 'manual') {
+                    btn.innerHTML = 'Kirim & Sumbang Poin';
+                    btn.disabled = false;
+                }
             }
         });
 
+        // FUNGSI RESET FORM AI (Kembali ke kondisi awal untuk setor lagi)
+        function resetFormAI() {
+            document.getElementById('reviewForm').reset();
+            
+            // Bersihkan file preview
+            const fileInput = document.getElementById('inputImage');
+            const previewContainer = document.getElementById('image-preview-container');
+            const icon = document.getElementById('dropzone-icon');
+            const text = document.getElementById('dropzone-text');
+            const subText = document.getElementById('dropzone-sub');
+            fileInput.value = '';
+            previewContainer.classList.add('hidden');
+            icon.classList.remove('hidden');
+            text.classList.remove('hidden');
+            subText.classList.remove('hidden');
+
+            // Balikin UI
+            document.getElementById('ai-chat-interface').classList.add('hidden');
+            document.getElementById('ai-chat-interface').classList.remove('flex');
+            
+            document.getElementById('ai-typing').classList.remove('hidden');
+            document.getElementById('ai-response').classList.add('hidden');
+            document.getElementById('btn-setor-lagi').classList.add('hidden');
+
+            document.getElementById('form-wrapper').classList.remove('hidden');
+            document.getElementById('form-title').classList.remove('hidden');
+            document.getElementById('form-subtitle').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // APPLE STYLE MODALS 
+        // ==========================================
         function toggleAdminMode() { 
             const isAdminOn = document.body.classList.contains('admin-mode-on');
             if (isAdminOn) {
@@ -687,6 +1161,10 @@
             }
         }
 
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyAdmin();
+        });
+
         let pendingAdminAction = null;
 
         function sendAdminAction(userName, actionType, branchName) {
@@ -703,7 +1181,11 @@
                 confirmMsg = `Kurangi 1 poin dari <strong>${userName}</strong>?`;
                 iconHtml = '<i class="fa-solid fa-minus"></i>'; iconColor = 'text-[#FF9F0A]';
                 btnClass = 'flex-1 bg-[#FF9F0A] hover:bg-[#D08200] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
-            } 
+            } else if (actionType === 'claim') {
+                confirmMsg = `Catat pemberian 1 reward untuk <strong>${userName}</strong>?`;
+                iconHtml = '<i class="fa-solid fa-gift"></i>'; iconColor = 'text-[#34C759]';
+                btnClass = 'flex-1 bg-[#34C759] hover:bg-[#248A3D] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
+            }
 
             document.getElementById('confirmIcon').innerHTML = iconHtml;
             document.getElementById('confirmIcon').className = `text-4xl mb-4 ${iconColor}`;
