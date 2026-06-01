@@ -240,10 +240,6 @@
                 </select>
             </div>
 
-            <div id="cg-info" class="mb-6 p-3 bg-[#007AFF]/10 border border-[#007AFF]/20 rounded-xl text-[13px] text-[#007AFF] font-medium flex items-center gap-2 hidden">
-                <i class="fa-solid fa-circle-info"></i> Khusus divisi CG, kumpulkan kelipatan 5 poin untuk mencairkan hadiah!
-            </div>
-
             <div id="divisi-list" class="space-y-3 md:space-y-4"></div>
         </div>
 
@@ -286,7 +282,8 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby73GCj6dr0mcpC2F1gv39wwPP63LLUUzLlis3RQsJ-C0uyM4L8HOgLrwbD61qYG6J95w/exec";
+        // GANTI DENGAN URL API BARU JIKA BERUBAH
+        const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
         
         let rawData = []; 
         let filteredData = {}; 
@@ -295,15 +292,17 @@
 
         function initCalendar() {
             const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const formatDate = (date) => date.toISOString().split('T')[0];
             
-            document.getElementById('dateStart').value = formatDate(startOfMonth);
+            // Set DARI dan SAMPAI ke tanggal hari ini (Today)
+            document.getElementById('dateStart').value = formatDate(now);
             document.getElementById('dateEnd').value = formatDate(now);
             
-            filterStart = startOfMonth;
-            filterEnd = now;
-            filterEnd.setHours(23, 59, 59, 999);
+            filterStart = new Date(now);
+            filterStart.setHours(0, 0, 0, 0); // Mulai dari awal hari ini
+
+            filterEnd = new Date(now);
+            filterEnd.setHours(23, 59, 59, 999); // Sampai akhir hari ini
         }
 
         window.onload = function() {
@@ -396,18 +395,24 @@
             });
 
             rawData.forEach(row => {
-                const rowDate = new Date(row.date);
+                // FALLBACK TANGGAL
+                // Kalau ada data lama di excel yang kolom tanggalnya kosong, paksa dia masuk jadi tahun 2000
+                // Biar dia kebaca sama filter kalender kita dan 218 poin lu kaga ilang!
+                let rowDate = new Date(row.date);
+                if (isNaN(rowDate.getTime())) {
+                    rowDate = new Date('2026-05-01T00:00:00Z'); 
+                }
+
                 if (rowDate >= filterStart && rowDate <= filterEnd) {
                     const b = row.branch;
                     const name = row.name;
                     
                     if (filteredData.branches[b]) {
                         if (!filteredData.branches[b].users[name]) {
-                            filteredData.branches[b].users[name] = { score: 0, claims: 0, accounts: [] };
+                            filteredData.branches[b].users[name] = { score: 0, accounts: [] };
                         }
                         
                         filteredData.branches[b].users[name].score += row.score;
-                        filteredData.branches[b].users[name].claims += row.claims;
                         if (row.account) filteredData.branches[b].users[name].accounts.push(row.account);
                         
                         filteredData.branches[b].total += row.score;
@@ -424,15 +429,9 @@
                 
                 for (let uName in usersObj) {
                     if (usersObj[uName].score > 0) { 
-                        let totalScore = usersObj[uName].score;
-                        let claimed = usersObj[uName].claims;
-                        let available = Math.floor(totalScore / 5) - claimed;
-                        
                         userArr.push({
                             name: uName,
-                            score: totalScore,
-                            claimedCount: claimed,
-                            availableClaims: available > 0 ? available : 0,
+                            score: usersObj[uName].score,
                             accountsStr: usersObj[uName].accounts.join("||")
                         });
                     }
@@ -446,7 +445,6 @@
             renderMasterChart();
         }
 
-        // FUNGSI SIMULASI DUMMY DATA UNTUK TEST ANIMASI
         function runSimulation() {
             filteredData.master = [
                 { branch: "Purwakarta", totalScore: 166 },
@@ -457,10 +455,9 @@
                 { branch: "Cianjur", totalScore: 61 }
             ];
 
-            // Setup mock data agar tab Divisi tidak error
             const mockUsers = [
-                {name: "Dummy Pro", score: 50, claimedCount: 5, availableClaims: 5, accountsStr: ""},
-                {name: "Dummy Noob", score: 10, claimedCount: 0, availableClaims: 2, accountsStr: ""}
+                {name: "Dummy Pro", score: 50, accountsStr: ""},
+                {name: "Dummy Noob", score: 10, accountsStr: ""}
             ];
             
             const branchesList = ["Online", "CG", "Graha", "Galuh", "Purwakarta", "Cianjur"];
@@ -540,11 +537,7 @@
         function renderDivisiList() {
             const selectedBranch = document.getElementById('branchFilter').value;
             const listEl = document.getElementById('divisi-list');
-            const cgInfo = document.getElementById('cg-info');
             listEl.innerHTML = '';
-
-            if (selectedBranch === 'CG') cgInfo.classList.remove('hidden');
-            else cgInfo.classList.add('hidden');
 
             const branchUsers = filteredData.branches[selectedBranch]?.userList || [];
 
@@ -562,33 +555,10 @@
                 else if (rank === 2) { extraClasses = 'rank-2'; icon = '<span class="text-xl md:text-2xl text-[#D1D1D6]"><i class="fa-solid fa-medal"></i></span>'; } 
                 else if (rank === 3) { extraClasses = 'rank-3'; icon = '<span class="text-xl md:text-2xl text-[#FF9F0A]"><i class="fa-solid fa-award"></i></span>'; }
 
-                let claimDisplayHtml = '';
-                let adminClaimBtn = '';
-                
-                if (selectedBranch === 'CG') {
-                    let claimColor = participant.availableClaims > 0 ? "text-[#34C759] font-semibold animate-pulse" : "text-[#8E8E93]";
-                    let pulseClass = participant.availableClaims > 0 ? "border-[#34C759]/30 bg-[#34C759]/10 shadow-sm" : "border-white/5 bg-[#2C2C2E]";
-                    
-                    claimDisplayHtml = `
-                        <div class="mt-1.5 text-[11px] px-2.5 py-1 rounded-md inline-flex items-center gap-1.5 w-fit border ${pulseClass}">
-                            <span class="text-[#EBEBF5] whitespace-nowrap">Claim: <strong class="text-[#007AFF]">${participant.claimedCount}x</strong></span>
-                            <span class="text-[#636366] text-[9px]">|</span>
-                            <span class="${claimColor} whitespace-nowrap">Sisa: <strong>${participant.availableClaims}x</strong></span>
-                        </div>
-                    `;
-
-                    if (participant.availableClaims > 0) {
-                        adminClaimBtn = `
-                            <button onclick="sendAdminAction('${participant.name}', 'claim', '${selectedBranch}')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0" title="ACC 1 Reward">
-                                <i class="fa-solid fa-gift"></i> ACC
-                            </button>
-                        `;
-                    }
-                }
-
                 const safeName = participant.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                 const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(participant.name)}&backgroundColor=transparent`;
 
+                // Struktur UI Bersih TANPA INFO CLAIM
                 const cardHtml = `
                     <div class="flex flex-col md:flex-row p-3 md:p-4 rounded-2xl ${extraClasses} transition-all gap-3 md:gap-5 relative overflow-hidden items-start md:items-center justify-between">
                         <div class="flex items-center gap-3 w-full md:w-auto md:flex-1">
@@ -597,16 +567,11 @@
                             
                             <div class="flex flex-col min-w-0 flex-1">
                                 <span class="text-[16px] md:text-lg font-semibold text-white truncate leading-tight">${participant.name}</span>
-                                <div class="hidden md:block">${claimDisplayHtml}</div>
                             </div>
                             
                             <div class="md:hidden text-[#007AFF] font-bold text-xl shrink-0 flex items-baseline gap-0.5">
                                 ${participant.score}<span class="text-[10px] font-medium text-[#8E8E93] pb-0.5">pts</span>
                             </div>
-                        </div>
-
-                        <div class="md:hidden pl-[60px] w-full">
-                            ${claimDisplayHtml}
                         </div>
 
                         <div class="flex items-center justify-end w-full md:w-auto gap-3 mt-1 pt-3 md:pt-0 border-t border-white/5 md:border-0">
@@ -615,7 +580,6 @@
                             </div>
                             
                             <div class="admin-controls flex-row items-center justify-end gap-1.5 w-full md:w-auto">
-                                ${adminClaimBtn}
                                 <button onclick="sendAdminAction('${safeName}', 'decrease', '${selectedBranch}')" class="bg-[#FF9F0A]/10 text-[#FF9F0A] hover:bg-[#FF9F0A] hover:text-white w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer shrink-0" title="Kurangi Poin (-1)">
                                     <i class="fa-solid fa-minus text-sm"></i>
                                 </button>
@@ -739,11 +703,7 @@
                 confirmMsg = `Kurangi 1 poin dari <strong>${userName}</strong>?`;
                 iconHtml = '<i class="fa-solid fa-minus"></i>'; iconColor = 'text-[#FF9F0A]';
                 btnClass = 'flex-1 bg-[#FF9F0A] hover:bg-[#D08200] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
-            } else if (actionType === 'claim') {
-                confirmMsg = `Catat pemberian 1 reward untuk <strong>${userName}</strong>?`;
-                iconHtml = '<i class="fa-solid fa-gift"></i>'; iconColor = 'text-[#34C759]';
-                btnClass = 'flex-1 bg-[#34C759] hover:bg-[#248A3D] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
-            }
+            } 
 
             document.getElementById('confirmIcon').innerHTML = iconHtml;
             document.getElementById('confirmIcon').className = `text-4xl mb-4 ${iconColor}`;
