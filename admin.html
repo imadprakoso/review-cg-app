@@ -3,354 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin - CG Maps Challenge</title>
+    <title>Admin - Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background-color: #000000; color: #F2F2F2; min-height: 100vh; -webkit-font-smoothing: antialiased;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #F2F2F2; min-height: 100vh; }
         .ios-card { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; }
-        .ios-input { background-color: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s ease; outline: none;}
+        .ios-input { background-color: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; outline: none; }
         .ios-input:focus { border-color: #007AFF; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
-
-        /* Apple Style Toggle */
-        .ios-toggle { position: relative; display: inline-block; width: 46px; height: 28px; }
-        .ios-toggle input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3A3A3C; transition: .3s; border-radius: 34px; }
-        .toggle-slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        input:checked + .toggle-slider { background-color: #34C759; }
-        input:checked + .toggle-slider:before { transform: translateX(18px); }
-
-        /* Table */
+        /* Modal Styles */
+        .modal { backdrop-filter: blur(10px); background: rgba(0,0,0,0.6); }
+        .modal-content { background: #1C1C1E; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 320px; padding: 24px; text-align: center; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; }
-        th { background-color: #2C2C2E; color: #8E8E93; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left;}
-        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; vertical-align: middle;}
-        tr:last-child td { border-bottom: none; }
-        
-        .msg-box { 
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%); 
-            z-index: 50; padding: 12px 24px; border-radius: 9999px; font-weight: 500; font-size: 14px;
-            backdrop-filter: blur(20px); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-        }
-        .msg-box.show { transform: translateX(-50%) translateY(0); }
-        .msg-error { background-color: rgba(255, 59, 48, 0.9); }
-        .msg-success { background-color: rgba(52, 199, 89, 0.9); }
+        th { color: #8E8E93; font-size: 12px; padding: 12px 16px; border-bottom: 1px solid #333; text-align: left; }
+        td { padding: 16px; border-bottom: 1px solid #333; }
     </style>
 </head>
-
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <div id="msgBox" class="msg-box"></div>
-
-    <!-- LOCK SCREEN -->
-    <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
-        <div class="text-[#007AFF] text-6xl mb-6"><i class="fa-solid fa-shield-halved"></i></div>
-        <h2 class="text-2xl font-bold mb-2">Super Admin System</h2>
-        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia untuk melanjutkan.</p>
-        <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
-        <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Dashboard</button>
+    <!-- MODAL KONFIRMASI APPLE STYLE -->
+    <div id="actionModal" class="modal fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="modal-content shadow-2xl">
+            <h3 id="modalTitle" class="text-lg font-semibold text-white mb-2">Konfirmasi</h3>
+            <p id="modalDesc" class="text-gray-400 text-sm mb-6"></p>
+            <div id="modalInputArea" class="hidden mb-4"><input type="text" id="modalInput" class="ios-input w-full p-2 text-white"></div>
+            <div class="flex gap-2">
+                <button onclick="hideModal()" class="flex-1 bg-[#2C2C2E] py-2 rounded-xl text-sm font-medium text-white">Batal</button>
+                <button id="modalConfirmBtn" class="flex-1 bg-[#007AFF] py-2 rounded-xl text-sm font-bold text-white">Ya</button>
+            </div>
+        </div>
     </div>
 
-    <!-- MAIN ADMIN WRAPPER -->
-    <div id="adminApp" class="w-full max-w-7xl hidden flex-col gap-6">
-        
-        <!-- HEADER -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight text-white"><i class="fa-solid fa-server text-[#007AFF] mr-2"></i>Control Center</h1>
-                <p class="text-[#8E8E93] text-sm mt-1">Mengelola Data Keseluruhan Divisi Cipta Grafika</p>
-            </div>
-            <a href="index.html" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 border border-white/10">
-                <i class="fa-solid fa-arrow-left"></i> Kembali ke Web
-            </a>
+    <div class="w-full max-w-6xl flex flex-col gap-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold text-white">Control Center</h1>
+            <a href="index.html" class="bg-[#2C2C2E] px-4 py-2 rounded-lg text-sm text-white">Kembali ke Web</a>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- KOLOM KIRI: SETTINGS & TOOLS -->
-            <div class="flex flex-col gap-6">
-                <!-- Pengaturan Cabang & Rules -->
-                <div class="ios-card p-6">
-                    <h3 class="text-lg font-semibold mb-4 border-b border-white/10 pb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-sliders text-[#34C759]"></i> Pengaturan Cabang
-                    </h3>
-                    
-                    <div id="branchToggles" class="space-y-4 mb-6">
-                        <p class="text-[#8E8E93] text-sm"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat cabang...</p>
-                    </div>
-
-                    <div class="pt-4 border-t border-white/10">
-                        <h4 class="font-medium text-white mb-3 text-sm">Tambah Cabang Baru</h4>
-                        <div class="flex gap-2">
-                            <input type="text" id="newBranchInput" placeholder="Nama cabang..." class="ios-input px-3 py-2 rounded-lg text-sm w-full text-white">
-                            <button onclick="addBranch()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"><i class="fa-solid fa-plus"></i></button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Database Tools -->
-                <div class="ios-card p-6">
-                    <h3 class="text-lg font-semibold mb-4 border-b border-white/10 pb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-database text-[#FF9F0A]"></i> Database Tools
-                    </h3>
-                    <div class="space-y-3">
-                        <button onclick="fetchAdminData()" class="w-full bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white py-3 rounded-xl text-sm font-medium flex justify-center items-center gap-2 transition-colors border border-white/5">
-                            <i class="fa-solid fa-rotate-right text-[#007AFF]"></i> Refresh Data Terkini
-                        </button>
-                    </div>
-                </div>
+            <div class="ios-card p-6">
+                <h3 class="text-lg font-semibold mb-4">Pengaturan Cabang</h3>
+                <input type="text" id="newBranchInput" placeholder="Nama cabang baru..." class="ios-input w-full p-2 mb-2 rounded-lg">
+                <button onclick="addBranch()">Tambah Cabang</button>
             </div>
 
-            <!-- KOLOM KANAN: DATA MANAGEMENT (All Time) -->
-            <div class="lg:col-span-2 ios-card flex flex-col h-[750px] overflow-hidden">
-                <div class="p-6 pb-0">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                        <h3 class="text-lg font-semibold flex items-center gap-2">
-                            <i class="fa-solid fa-users-gear text-[#007AFF]"></i> Manajemen Database (All-Time)
-                        </h3>
-                        
-                        <!-- Toolbar Filters -->
-                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                            <select id="filterDivisi" onchange="filterTable()" class="ios-input px-3 py-2 rounded-lg text-sm text-white min-w-[120px]">
-                                <option value="ALL">Semua Divisi</option>
-                            </select>
-                            <div class="relative flex-1 min-w-[200px]">
-                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8E8E93] text-sm"></i>
-                                <input type="text" id="searchName" onkeyup="filterTable()" placeholder="Cari peserta/akun..." class="ios-input w-full pl-9 pr-3 py-2 rounded-lg text-sm text-white">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TABLE AREA -->
-                <div class="overflow-x-auto flex-1 mt-2">
-                    <table class="w-full text-left whitespace-nowrap">
-                        <thead class="sticky top-0 bg-[#1C1C1E] shadow-md z-10">
-                            <tr>
-                                <th class="w-24">Divisi</th>
-                                <th>Nama Peserta (Akun)</th>
-                                <th class="text-center w-24">Poin</th>
-                                <th class="text-center w-28">Claimed</th>
-                                <th class="text-right w-48 pr-6">Aksi / Kontrol</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <tr><td colspan="5" class="text-center text-[#8E8E93] py-20"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-3 block text-[#007AFF]"></i>Mengambil data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="p-4 bg-[#1C1C1E] border-t border-white/5 text-xs text-[#8E8E93] text-center" id="totalRecords">
-                    Menampilkan 0 Baris Unik
-                </div>
+            <div class="lg:col-span-2 ios-card p-6">
+                <select id="filterDivisi" onchange="filterTable()" class="ios-input p-2 rounded-lg text-white mb-4">
+                    <option value="ALL">Semua Divisi</option>
+                </select>
+                <table class="w-full">
+                    <thead><tr><th>Divisi</th><th>Nama</th><th>Poin</th><th>Claimed</th><th>Aksi</th></tr></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
-
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby73GCj6dr0mcpC2F1gv39wwPP63LLUUzLlis3RQsJ-C0uyM4L8HOgLrwbD61qYG6J95w/exec";
-        
-        let globalRawData = []; 
-        let branchesList = [];
-
-        function showMessage(text, type) {
-            const msgBox = document.getElementById('msgBox');
-            msgBox.innerText = text;
-            msgBox.className = `msg-box show ${type === 'error' ? 'msg-error' : 'msg-success'}`;
-            setTimeout(() => { msgBox.classList.remove('show'); }, 3000);
-        }
-
-        function checkPin() {
-            if (document.getElementById('pinInput').value === "1155") {
-                document.getElementById('lockScreen').style.opacity = "0";
-                setTimeout(() => {
-                    document.getElementById('lockScreen').style.display = 'none';
-                    document.getElementById('adminApp').classList.remove('hidden');
-                    document.getElementById('adminApp').classList.add('flex');
-                    fetchAdminData();
-                }, 400);
-            } else {
-                showMessage("PIN Salah!", "error");
-                document.getElementById('pinInput').value = "";
-            }
-        }
-        document.getElementById('pinInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPin(); });
+        const API_URL = "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec";
+        let globalRawData = [];
 
         async function fetchAdminData() {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-20"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-3 block text-[#007AFF]"></i>Menyinkronkan data dari server...</td></tr>';
-            try {
-                // Fetch mode admin untuk mendapatkan semua data sheet
-                const response = await fetch(`${API_URL}?action=getAdminData&nocache=${new Date().getTime()}`);
-                const res = await response.json();
-                
-                globalRawData = res.data || [];
-                branchesList = res.branches || [];
-
-                updateDropdownsAndToggles();
-                filterTable();
-            } catch (err) {
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Gagal memuat data. Cek koneksi Anda.</td></tr>';
-            }
+            const res = await fetch(`${API_URL}?action=getAdminData`);
+            const json = await res.json();
+            globalRawData = json.data;
+            renderTable(globalDataAccumulated(globalRawData));
         }
 
-        function updateDropdownsAndToggles() {
-            // Update Filter Table
-            const filterDivisi = document.getElementById('filterDivisi');
-            const currentVal = filterDivisi.value;
-            filterDivisi.innerHTML = `<option value="ALL">Semua Divisi</option>` + branchesList.map(b => `<option value="${b}">Cabang ${b}</option>`).join('');
-            filterDivisi.value = currentVal === "" ? "ALL" : currentVal;
+        function globalDataAccumulated(data) {
+            const grouped = {};
+            data.forEach(item => {
+                const key = `${item.branch}_${item.name}`;
+                if (!grouped[key]) grouped[key] = { ...item, score: 0, claims: 0 };
+                grouped[key].score += Number(item.poin);
+                grouped[key].claims += Number(item.claim);
+            });
+            return Object.values(grouped);
+        }
 
-            // Update Toggles Settings
-            const toggleContainer = document.getElementById('branchToggles');
-            toggleContainer.innerHTML = branchesList.map(b => `
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h4 class="font-medium text-white text-sm">Cabang ${b}</h4>
-                        <p class="text-[11px] text-[#8E8E93]">Fitur Claim Reward (Kelipatan 5)</p>
-                    </div>
-                    <label class="ios-toggle">
-                        <input type="checkbox" ${b === 'CG' ? 'checked' : ''} onchange="showMessage('Pengaturan disimpan untuk cabang ${b}', 'success')">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = data.map(r => `
+                <tr>
+                    <td>${r.branch}</td>
+                    <td>${r.nama}</td>
+                    <td class="font-bold text-[#34C759]">${r.score}</td>
+                    <td>
+                        <div class="text-[#007AFF]">${r.claims}x</div>
+                        <div class="text-[10px] text-[#8E8E93]">Sisa: ${Math.floor(r.score/5) - r.claims}x</div>
+                    </td>
+                    <td>
+                        <button class="btn-edit" onclick="showModal('edit', '${r.nama}', '${r.branch}')">Edit</button>
+                        <button class="btn-danger" onclick="showModal('delete', '${r.nama}', '${r.branch}')">Hapus</button>
+                        <button class="btn-edit" onclick="showModal('claim', '${r.nama}', '${r.branch}')">🎁</button>
+                    </td>
+                </tr>
             `).join('');
         }
 
-        // Fungsi GROUPING agar nama yang sama terakumulasi
-        function groupData(rawData) {
-            const grouped = {};
-            rawData.forEach(item => {
-                // Gunakan kombinasi divisi dan nama sebagai identifier unik
-                const key = `${item.branch}_${item.name}`; 
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        branch: item.branch,
-                        name: item.name,
-                        account: item.account || '-', 
-                        score: 0,
-                        claims: 0,
-                    };
-                }
-                grouped[key].score += (Number(item.score) || 0); 
-                grouped[key].claims += (Number(item.claims) || 0); 
+        // Logic Modal Apple Style
+        function showModal(action, name, branch) {
+            const modal = document.getElementById('actionModal');
+            const title = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const btn = document.getElementById('modalConfirmBtn');
+            const inputArea = document.getElementById('modalInputArea');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            if(action === 'edit') {
+                title.innerText = "Edit Nama";
+                inputArea.classList.remove('hidden');
+                btn.onclick = () => performAction(action, name, branch, document.getElementById('modalInput').value);
+            } else {
+                title.innerText = "Konfirmasi";
+                desc.innerText = `Yakin ingin ${action} data ${name}?`;
+                btn.onclick = () => performAction(action, name, branch);
+            }
+        }
+
+        function hideModal() { document.getElementById('actionModal').classList.add('hidden'); }
+
+        async function performAction(action, name, branch, newName = "") {
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action, name, branch, newName })
             });
-            // Urutkan dari poin tertinggi
-            return Object.values(grouped).sort((a, b) => b.score - a.score); 
+            hideModal();
+            fetchAdminData();
         }
 
-        function filterTable() {
-            const query = document.getElementById('searchName').value.toLowerCase();
-            const selectedDivisi = document.getElementById('filterDivisi').value;
-
-            let filteredRaw = globalRawData;
-            
-            if (selectedDivisi !== "ALL") {
-                filteredRaw = filteredRaw.filter(d => d.branch === selectedDivisi);
-            }
-            
-            // Lakukan akumulasi
-            let aggregatedData = groupData(filteredRaw);
-
-            // Terapkan pencarian ke data yang sudah diakumulasi
-            if (query) {
-                aggregatedData = aggregatedData.filter(d => 
-                    d.name.toLowerCase().includes(query) || 
-                    d.account.toLowerCase().includes(query)
-                );
-            }
-
-            renderTableHTML(aggregatedData);
-        }
-
-        function renderTableHTML(data) {
-            const tbody = document.getElementById('tableBody');
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-20">Tidak ada data ditemukan.</td></tr>';
-                document.getElementById('totalRecords').innerText = `Menampilkan 0 Baris Unik`;
-                return;
-            }
-
-            tbody.innerHTML = data.map(row => {
-                const safeName = row.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                return `
-                <tr class="hover:bg-white/[0.02] transition-colors group">
-                    <td><span class="bg-[#2C2C2E] border border-white/10 px-3 py-1 rounded-md text-[11px] font-bold text-white uppercase tracking-wider">${row.branch}</span></td>
-                    <td>
-                        <div class="font-semibold text-white text-[15px]">${row.name}</div>
-                        <div class="text-[11px] text-[#8E8E93] mt-0.5"><i class="fa-regular fa-user mr-1"></i> Akun: ${row.account}</div>
-                    </td>
-                    <td class="text-center text-[#34C759] font-bold text-lg">${row.score}</td>
-                    <td class="text-center text-[#007AFF] font-semibold text-[15px]">${row.claims}x</td>
-                    <td class="text-right pr-6">
-                        <div class="flex justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <button onclick="adminAction('${row.branch}', '${safeName}', 'editName')" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border border-white/5">Edit</button>
-                            <button onclick="adminAction('${row.branch}', '${safeName}', 'claim')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors" title="ACC Reward (Menambah angka Claimed)"><i class="fa-solid fa-gift"></i></button>
-                            <button onclick="adminAction('${row.branch}', '${safeName}', 'delete')" class="bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors" title="Hapus Permanen"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `}).join('');
-            
-            document.getElementById('totalRecords').innerText = `Menampilkan ${data.length} Baris Unik yang Terakumulasi`;
-        }
-
-        async function adminAction(branch, name, action) {
-            let confirmMsg = "";
-            let payload = { action: action, branch: branch, name: name };
-
-            if (action === 'delete') confirmMsg = `HAPUS PERMANEN: Hapus semua riwayat review ${name} di cabang ${branch}?`;
-            if (action === 'claim') confirmMsg = `Catat bahwa ${name} telah mengambil 1 Reward? (Ini akan mengubah angka Claimed jadi +1)`;
-            if (action === 'editName') {
-                const newName = prompt(`Ubah nama "${name}" menjadi:`, name);
-                if (!newName || newName === name) return;
-                payload.newName = newName;
-                confirmMsg = `Ubah nama menjadi ${newName}?`;
-            }
-
-            if(action !== 'editName' && !confirm(confirmMsg)) return;
-
-            showMessage("Memproses ke server...", "success");
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                showMessage("Berhasil diperbarui!", "success");
-                setTimeout(fetchAdminData, 1500);
-            } catch (err) {
-                showMessage("Gagal terhubung ke server.", "error");
-            }
-        }
-
-        async function addBranch() {
-            const branchName = document.getElementById('newBranchInput').value.trim();
-            if(!branchName) return;
-
-            document.getElementById('newBranchInput').value = "";
-            showMessage(`Membuat cabang ${branchName}...`, "success");
-            
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'addBranch', branchName: branchName })
-                });
-                showMessage("Cabang berhasil ditambahkan!", "success");
-                setTimeout(fetchAdminData, 1500);
-            } catch (err) {
-                showMessage("Gagal membuat cabang.", "error");
-            }
-        }
-
+        loadAdminData();
     </script>
 </body>
 </html>
