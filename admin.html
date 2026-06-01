@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Maps Challenge</title>
+    <title>Super Admin - Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -23,6 +23,10 @@
         .toggle-slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         input:checked + .toggle-slider { background-color: #34C759; }
         input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+        /* Modal Styles */
+        .modal { backdrop-filter: blur(10px); background: rgba(0,0,0,0.6); }
+        .modal-content { background: #1C1C1E; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 320px; padding: 24px; text-align: center; }
 
         /* Table */
         table { border-collapse: separate; border-spacing: 0; width: 100%; }
@@ -46,12 +50,27 @@
 
     <div id="msgBox" class="msg-box"></div>
 
+    <!-- MODAL KONFIRMASI APPLE STYLE -->
+    <div id="actionModal" class="modal fixed inset-0 z-[150] hidden items-center justify-center">
+        <div class="modal-content shadow-2xl transform scale-95 transition-transform duration-300" id="modalBox">
+            <h3 id="modalTitle" class="text-lg font-semibold text-white mb-2">Konfirmasi</h3>
+            <p id="modalDesc" class="text-[#8E8E93] text-sm mb-6"></p>
+            <div id="modalInputArea" class="hidden mb-6">
+                <input type="text" id="modalInput" class="ios-input w-full p-3 rounded-xl text-white text-center">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="hideModal()" class="flex-1 bg-[#2C2C2E] hover:bg-[#3A3A3C] py-3 rounded-xl text-sm font-medium text-white transition-colors">Batal</button>
+                <button id="modalConfirmBtn" class="flex-1 bg-[#007AFF] hover:bg-[#005bb5] py-3 rounded-xl text-sm font-bold text-white transition-colors">Ya</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LOCK SCREEN -->
-    <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
+    <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="text-[#007AFF] text-6xl mb-6"><i class="fa-solid fa-shield-halved"></i></div>
         <h2 class="text-2xl font-bold mb-2">Super Admin System</h2>
         <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia untuk melanjutkan.</p>
-        <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
+        <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white transition-all">
         <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Admin</button>
     </div>
 
@@ -166,17 +185,20 @@
         }
 
         function checkPin() {
-            if (document.getElementById('pinInput').value === "1155") {
-                document.getElementById('lockScreen').style.opacity = "0";
+            const pinInput = document.getElementById('pinInput');
+            if (pinInput.value === "1155") {
+                const lockScreen = document.getElementById('lockScreen');
+                lockScreen.style.opacity = "0";
                 setTimeout(() => {
-                    document.getElementById('lockScreen').style.display = 'none';
+                    lockScreen.style.display = 'none';
                     document.getElementById('adminApp').classList.remove('hidden');
                     document.getElementById('adminApp').classList.add('flex');
                     fetchAdminData();
-                }, 400);
+                }, 500);
             } else {
                 showMessage("PIN Salah!", "error");
-                document.getElementById('pinInput').value = "";
+                pinInput.value = "";
+                pinInput.focus();
             }
         }
         document.getElementById('pinInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPin(); });
@@ -184,7 +206,6 @@
         async function fetchAdminData() {
             document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-20"><i class="fa-solid fa-circle-notch fa-spin text-2xl mb-3 block text-[#007AFF]"></i>Menyinkronkan data dari server...</td></tr>';
             try {
-                // Fetch mode admin untuk mendapatkan semua data sheet
                 const response = await fetch(`${API_URL}?action=getAdminData&nocache=${new Date().getTime()}`);
                 const res = await response.json();
                 
@@ -199,13 +220,11 @@
         }
 
         function updateDropdownsAndToggles() {
-            // Update Filter Table
             const filterDivisi = document.getElementById('filterDivisi');
             const currentVal = filterDivisi.value;
             filterDivisi.innerHTML = `<option value="ALL">Semua Divisi</option>` + branchesList.map(b => `<option value="${b}"> ${b}</option>`).join('');
             filterDivisi.value = currentVal === "" ? "ALL" : currentVal;
 
-            // Update Toggles Settings
             const toggleContainer = document.getElementById('branchToggles');
             toggleContainer.innerHTML = branchesList.map(b => `
                 <div class="flex justify-between items-center">
@@ -221,11 +240,9 @@
             `).join('');
         }
 
-        // Fungsi GROUPING agar nama yang sama terakumulasi
         function groupData(rawData) {
             const grouped = {};
             rawData.forEach(item => {
-                // Gunakan kombinasi divisi dan nama sebagai identifier unik
                 const key = `${item.branch}_${item.name}`; 
                 if (!grouped[key]) {
                     grouped[key] = {
@@ -239,7 +256,6 @@
                 grouped[key].score += (Number(item.score) || 0); 
                 grouped[key].claims += (Number(item.claims) || 0); 
             });
-            // Urutkan dari poin tertinggi
             return Object.values(grouped).sort((a, b) => b.score - a.score); 
         }
 
@@ -253,10 +269,8 @@
                 filteredRaw = filteredRaw.filter(d => d.branch === selectedDivisi);
             }
             
-            // Lakukan akumulasi
             let aggregatedData = groupData(filteredRaw);
 
-            // Terapkan pencarian ke data yang sudah diakumulasi
             if (query) {
                 aggregatedData = aggregatedData.filter(d => 
                     d.name.toLowerCase().includes(query) || 
@@ -279,7 +293,6 @@
             tbody.innerHTML = data.map(row => {
                 const safeName = row.name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                 
-                // Menghitung Sisa Claim (Fitur Baru)
                 const eligibleRewards = Math.floor(row.score / 5);
                 const sisaClaim = eligibleRewards - row.claims;
                 const sisaClaimText = sisaClaim > 0 ? `<span class="text-[#34C759] font-semibold">${sisaClaim}x</span>` : `<span class="text-[#8E8E93]">${sisaClaim}x</span>`;
@@ -298,9 +311,9 @@
                     </td>
                     <td class="text-right pr-6">
                         <div class="flex justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <button onclick="adminAction('${row.branch}', '${safeName}', 'editName')" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border border-white/5">Edit</button>
-                            <button onclick="adminAction('${row.branch}', '${safeName}', 'claim')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors" title="ACC Reward (Menambah angka Claimed)"><i class="fa-solid fa-gift"></i></button>
-                            <button onclick="adminAction('${row.branch}', '${safeName}', 'delete')" class="bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors" title="Hapus Permanen"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="showModal('editName', '${row.branch}', '${safeName}')" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors border border-white/5">Edit</button>
+                            <button onclick="showModal('claim', '${row.branch}', '${safeName}')" class="bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759] hover:text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors" title="ACC Reward (Menambah angka Claimed)"><i class="fa-solid fa-gift"></i></button>
+                            <button onclick="showModal('delete', '${row.branch}', '${safeName}')" class="bg-[#FF3B30]/10 text-[#FF3B30] hover:bg-[#FF3B30] hover:text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-colors" title="Hapus Permanen"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -309,21 +322,76 @@
             document.getElementById('totalRecords').innerText = `Menampilkan ${data.length} Baris Unik yang Terakumulasi`;
         }
 
-        async function adminAction(branch, name, action) {
-            let confirmMsg = "";
-            let payload = { action: action, branch: branch, name: name };
+        // --- CUSTOM APPLE STYLE MODAL LOGIC ---
+        let currentPendingAction = null;
 
-            if (action === 'delete') confirmMsg = `HAPUS PERMANEN: Hapus semua riwayat review ${name} di cabang ${branch}?`;
-            if (action === 'claim') confirmMsg = `Catat bahwa ${name} telah mengambil 1 Reward? (Ini akan mengubah angka Claimed jadi +1)`;
-            if (action === 'editName') {
-                const newName = prompt(`Ubah nama "${name}" menjadi:`, name);
-                if (!newName || newName === name) return;
-                payload.newName = newName;
-                confirmMsg = `Ubah nama menjadi ${newName}?`;
+        function showModal(action, branch, name) {
+            const modal = document.getElementById('actionModal');
+            const box = document.getElementById('modalBox');
+            const title = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const inputArea = document.getElementById('modalInputArea');
+            const input = document.getElementById('modalInput');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+
+            // Reset
+            inputArea.classList.add('hidden');
+            input.value = '';
+            confirmBtn.className = "flex-1 py-3 rounded-xl text-sm font-bold text-white transition-colors";
+
+            if (action === 'delete') {
+                title.innerText = "Hapus Data";
+                desc.innerHTML = `Hapus semua riwayat review <strong>${name}</strong> di cabang ${branch}? Tindakan ini permanen.`;
+                confirmBtn.classList.add('bg-[#FF3B30]', 'hover:bg-[#D70015]');
+                currentPendingAction = () => performAction({ action, branch, name });
+            } 
+            else if (action === 'claim') {
+                title.innerText = "ACC Reward";
+                desc.innerHTML = `Catat bahwa <strong>${name}</strong> telah mengambil 1 Reward?<br><span class="text-[11px] mt-2 block">(Angka Claimed akan bertambah 1)</span>`;
+                confirmBtn.classList.add('bg-[#34C759]', 'hover:bg-[#248A3D]');
+                currentPendingAction = () => performAction({ action, branch, name });
+            } 
+            else if (action === 'editName') {
+                title.innerText = "Ubah Nama";
+                desc.innerText = `Masukkan nama baru untuk ${name}:`;
+                inputArea.classList.remove('hidden');
+                input.value = name;
+                confirmBtn.classList.add('bg-[#007AFF]', 'hover:bg-[#005bb5]');
+                currentPendingAction = () => {
+                    const newName = input.value.trim();
+                    if (!newName || newName === name) {
+                        hideModal();
+                        return;
+                    }
+                    performAction({ action, branch, name, newName });
+                };
             }
 
-            if(action !== 'editName' && !confirm(confirmMsg)) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                box.classList.replace('scale-95', 'scale-100');
+                if(action === 'editName') input.focus();
+            }, 10);
+        }
 
+        function hideModal() {
+            const modal = document.getElementById('actionModal');
+            const box = document.getElementById('modalBox');
+            box.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                currentPendingAction = null;
+            }, 300);
+        }
+
+        document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+            if(currentPendingAction) currentPendingAction();
+        });
+
+        async function performAction(payload) {
+            hideModal();
             showMessage("Memproses ke server...", "success");
             try {
                 await fetch(API_URL, {
@@ -359,7 +427,6 @@
                 showMessage("Gagal membuat cabang.", "error");
             }
         }
-
     </script>
 </body>
 </html>
