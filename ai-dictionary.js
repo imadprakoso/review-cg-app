@@ -1,4 +1,5 @@
 // KAMUS AI - CG MAPS CHALLENGE
+
 // 1. AWALAN (Sapaan, Reaksi Sistem, Deteksi)
 const awalanAI = [
     "Boom! 💥",
@@ -25,59 +26,44 @@ const awalanAI = [
 
 // 2. INTI (Konfirmasi Nama dan Keberhasilan)
 const intiAI = [
-    "Setoran review atas nama {nama} udah tercatat dengan aman di server.",
-    "Bukti screenshot dari {nama} lolos sensor dengan sempurna.",
-    "Data {nama} berhasil disinkronisasi ke database utama Cipta Grafika.",
-    "Review dari {nama} udah masuk dengan selamat.",
-    "Kerja bagus {nama}, ulasannya valid 100%.",
-    "Sistem mencatat kontribusi positif dari {nama} hari ini.",
-    "Tugas kelar, {nama} berhasil nambahin amunisi review buat kita.",
-    "Ulasan mendarat dengan mulus atas nama {nama}.",
-    "AI mengonfirmasi bahwa {nama} baru saja memberikan kontribusi luar biasa.",
-    "Jejak digital {nama} di Google Maps sudah divalidasi.",
-    "Sistem ngebaca setoran {nama} tanpa ada error sama sekali.",
-    "Nama {nama} terpampang jelas di laporan sukses.",
-    "Pengecekan OCR kelar, terima kasih {nama} buat setorannya.",
-    "Bintang 5 dari {nama} sukses terinput ke dalam klasemen.",
-    "Bukti valid! {nama} memang bisa diandalkan.",
-    "{nama} berkontribusi lagi nih buat naikin rating toko.",
-    "Setoran {nama} udah masuk radar top reviewer kita.",
-    "Proses otomatis selesai, data {nama} beres diurus.",
-    "Nggak kaleng-kaleng, {nama} sukses tervalidasi.",
-    "Sistem memberikan lampu hijau untuk setoran {nama}.",
-    "Satu lagi bukti dedikasi {nama} terekam oleh AI.",
-    "Validasi silang selesai, nama {nama} sah terdaftar.",
-    "Kontribusi dari {nama} ini berharga banget buat kemajuan tim.",
-    "{nama} sukses nge-hack algoritma dengan review ciamik ini.",
-    "Laporan diterima, {nama} officially nambahin rekam jejak positif."
+    "Ulasan Google Maps dari {reviewer} (disetor oleh {nama}) tercatat aman di server pusat.",
+    "Screenshot review milik konsumen {reviewer} (disetor oleh {nama}) lolos sensor verifikasi.",
+    "Data review {reviewer} (disetor oleh {nama}) berhasil disinkronkan ke database Cipta Grafika.",
+    "Pengecekan OCR kelar, terima kasih {nama}! Review dari {reviewer} masuk dengan selamat.",
+    "Kerja bagus {nama}, review Google Maps atas nama {reviewer} valid 100%.",
+    "Sistem mencatat setoran review {reviewer} yang dibawa oleh {nama} hari ini.",
+    "Tugas kelar! {nama} sukses nambahin review valid dari {reviewer}.",
+    "Ulasan dari konsumen {reviewer} mendarat mulus disetor oleh {nama}.",
+    "AI mengonfirmasi review {reviewer} (oleh staf {nama}) sah terekam di sistem.",
+    "Verifikasi nama reviewer Maps {reviewer} yang disetor oleh {nama} sukses.",
+    "Lampu hijau! Review dari {reviewer} yang diinput {nama} beres tanpa hambatan.",
+    "Proses OCR sukses membaca nama ulasan {reviewer}. Kerja mantap {nama}!",
+    "OCR menyala sempurna! Terbaca nama reviewer: {reviewer} (staf: {nama}).",
+    "Poin review {reviewer} resmi ditambahkan untuk {nama} di database.",
+    "Sistem memverifikasi ulasan Maps dari {reviewer} yang disetor {nama} aman."
 ];
 
 // 3. PENUTUP (Informasi Poin, Sisa Claim, Motivasi Tim)
 const penutupAI = [
-    "Sekarang poin kamu ada {total}. Gas terus!",
-    "Total koleksi kamu tembus {total} review. Jangan kasih kendor!",
-    "Dengan poin {total} ini, sisa claim kamu tinggal {sisa} lagi lho.",
-    "Makin gacor aja nih. Posisi poin sekarang di angka {total} 🚀",
-    "Kumpulkan terus poinnya! Poin saat ini: {total}.",
-    "Semangat Tim C! 🔥 Saldo review kamu sekarang ada {total}.",
-    "Sisa {sisa} slot claim lagi nungguin buat diambil. Ayo kejar!",
-    "Total agregat kamu sekarang {total}. Bikin kompetitor ketar-ketir!",
-    "Pertahankan ritmenya! Poin {total} udah ada di tangan.",
-    "Masih ada sisa claim {sisa}x, yuk kumpulin lagi biar makin cuan.",
-    "Angka {total} poin ini bukti kerja kerasmu. Keep it up!",
-    "Mesin produksi jalan, review juga jalan! Poin kamu: {total}.",
+    "Sekarang total ulasan yang terkumpul atas namamu ada {total}. Gas terus!",
+    "Koleksi poin kamu tembus {total} review. Jangan kasih kendor! 🔥",
+    "Dengan poin sebanyak {total} ini, jatah claim reward kamu tersisa {sisa} lagi.",
+    "Makin gacor aja nih. Posisi poin kamu sekarang di angka {total} 🚀",
+    "Kumpulkan terus poinnya! Poin kamu saat ini: {total}.",
+    "Semangat terus! Total review yang kamu kumpulkan sekarang ada {total}.",
+    "Sisa {sisa} reward nungguin buat kamu klaim. Ayo kumpulin lagi!",
+    "Total agregat pribadi kamu sekarang {total}. Bikin divisi lain ketar-ketir!",
+    "Pertahankan ritmenya! Poin {total} udah aman di tangan.",
+    "Masih ada sisa klaim kado {sisa}x, yuk kumpulin review lagi!",
+    "Angka {total} poin ini bukti kerja kerasmu nyata. Keep it up!",
+    "Satu ulasan berharga masuk. Saldo review kamu sekarang {total}.",
     "Cek dashboard deh, angka {total} poin kamu keren banget.",
-    "Target claim masih sisa {sisa}, sikat terus sebelum kehabisan!",
-    "Total {total} review udah kamu kumpulin sejauh ini. Respect! 🫡",
-    "Posisi aman, kumpulkan terus sampai sisa claim yang {sisa} ini terpakai semua!",
-    "Poin {total} tercapai. Mari kita gaspol ke target berikutnya.",
-    "Tingkatkan terus performanya! Saldo saat ini: {total}.",
-    "Gokil, dengan ini sisa claim kamu masih {sisa}. Fokus!",
-    "Buktikan siapa yang paling rajin! Poin kamu di klasemen sekarang {total}."
+    "Target kado masih sisa {sisa}, sikat terus sebelum kehabisan!",
+    "Total {total} review udah kamu kumpulin sejauh ini. Respect! 🫡"
 ];
 
 // FUNGSI GENERATOR UTAMA
-function generateAIResponse(namaUser, totalPoin, sisaClaim) {
+function generateAIResponse(namaUser, totalPoin, sisaClaim, namaReviewer) {
     // Ambil kata acak dari masing-masing array
     const randomAwalan = awalanAI[Math.floor(Math.random() * awalanAI.length)];
     const randomInti = intiAI[Math.floor(Math.random() * intiAI.length)];
@@ -86,8 +72,9 @@ function generateAIResponse(namaUser, totalPoin, sisaClaim) {
     // Gabungkan menjadi satu string utuh
     let kalimatUtuh = `${randomAwalan} ${randomInti} ${randomPenutup}`;
     
-    // Replace placeholder dengan data real-time
+    // Ganti placeholder dengan data real-time
     kalimatUtuh = kalimatUtuh.replace(/{nama}/g, namaUser)
+                             .replace(/{reviewer}/g, `<strong>${namaReviewer}</strong>`)
                              .replace(/{total}/g, totalPoin)
                              .replace(/{sisa}/g, sisaClaim);
                              
