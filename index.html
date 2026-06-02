@@ -890,12 +890,8 @@
         // ==========================================
         // LOGIKA SUBMIT DAN CHAT AI
         // ==========================================
-        const aiTemplates = [
-            "Wah cakep banget {nama}! Ulasan dari {reviewer} terdeteksi bintang 5 sempurna. Sekarang total review kamu ada {total} lho! 🎉",
-            "Mantap {nama}, bukti review dari {reviewer} berhasil tervalidasi! Total koleksi poin kamu udah tembus {total}. Gas terus! 🔥",
-            "Verifikasi AI Meta sukses ✅. Akun Google {reviewer} terdaftar atas namamu. Total poin: {total}.",
-            "Bip bop! OCR valid 🤖. Gambar reviewer {reviewer} terkonfirmasi. {nama} melesat dengan total {total} poin!"
-        ];
+        
+        // Array aiTemplates lama telah dihapus/dipindahkan ke ai-dictionary.js
 
         document.getElementById('reviewForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -1055,12 +1051,20 @@
                     let currentUser = branchUsers.find(u => u.name.toLowerCase() === nameInput.toLowerCase());
                     let newTotal = currentUser ? currentUser.score + 1 : 1;
 
-                    // Ambil Pesan Acak & Replace Variabel (Termasuk nama reviewer asli)
-                    const randomMsg = aiTemplates[Math.floor(Math.random() * aiTemplates.length)];
-                    const finalMsg = randomMsg
-                        .replace(/{nama}/g, nameInput)
-                        .replace(/{reviewer}/g, `<strong>${accountInput}</strong>`)
-                        .replace(/{total}/g, newTotal);
+                    // Ambil Pesan dari File Kamus Eksternal (ai-dictionary.js)
+                    let finalMsg = "Setoran berhasil diterima!"; // Fallback message
+                    try {
+                        // Memanggil fungsi generateAIResponse dari ai-dictionary.js
+                        // Fungsi ini akan mengacak kata dan mengganti variabel {nama}, {total}, dll.
+                        finalMsg = generateAIResponse(nameInput, newTotal, ""); 
+                        
+                        // Sisipkan nama reviewer riil yang dapet dari OCR
+                        finalMsg = finalMsg.replace(/{reviewer}/g, `<strong>${accountInput}</strong>`);
+                    } catch (err) {
+                        console.warn("Kamus AI belum terhubung atau ada error:", err);
+                        // Fallback manual jika file ai-dictionary.js gagal dimuat
+                        finalMsg = `Wah cakep banget ${nameInput}! Ulasan dari <strong>${accountInput}</strong> terdeteksi bintang 5 sempurna. Sekarang total review kamu ada ${newTotal} lho! 🎉`;
+                    }
 
                     // Tampilkan Balasan Chat AI
                     setTimeout(() => {
@@ -1222,6 +1226,10 @@
         function executePendingAction() { if (pendingAdminAction) pendingAdminAction(); }
 
     </script>
+    
+    <!-- Memuat kamus kata-kata AI -->
+    <script src="ai-dictionary.js"></script>
+
 </body>
 
 </html>
