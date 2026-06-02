@@ -328,11 +328,11 @@
         </div>
     </div>
 
-    <!-- Memuat kamus kata-kata AI -->
+    <!-- Memuat kamus kata-kata AI dari file terpisah -->
     <script src="ai-dictionary.js"></script>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec";
         
         let rawData = []; 
         let filteredData = {}; 
@@ -713,6 +713,7 @@
                 { branch: "Cianjur", totalScore: 61 }
             ];
 
+            // Setup mock data agar tab Divisi tidak error
             const mockUsers = [
                 {name: "Dummy Pro", score: 50, claimedCount: 5, availableClaims: 5, accountsStr: ""},
                 {name: "Dummy Noob", score: 10, claimedCount: 0, availableClaims: 2, accountsStr: ""}
@@ -859,37 +860,37 @@
             // Pola Maps seperti "menit lalu", "jam lalu", "ago", "★" dsb
             const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
             
+            // Pola yang harus diabaikan saat mencari nama asli
+            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps)/i;
+            
             for (let i = 0; i < lines.length; i++) {
                 if (timePattern.test(lines[i])) {
-                    // Baris sebelum baris rating/tanggal ini adalah nama reviewer!
-                    if (i > 0) {
-                        let potentialName = lines[i - 1];
-                        // Hilangkan baris aneh yang tidak logis sebagai nama manusia
-                        if (!potentialName.includes("Google") && !potentialName.includes("Share") && potentialName.length > 2) {
+                    // Berjalan MUNDUR dari baris waktu untuk mencari nama
+                    for (let j = i - 1; j >= 0; j--) {
+                        let potentialName = lines[j];
+                        // Jika baris BUKAN berisi gelar/sampah dan panjangnya logis, maka itu Namanya!
+                        if (!skipPattern.test(potentialName) && potentialName.length > 2) {
                             reviewer = potentialName;
                             break;
                         }
                     }
+                    break;
                 }
             }
             
-            // Fallback: Jika tidak ketemu pola waktu, gunakan baris pertama non-aplikatif
+            // Fallback: Jika tidak ketemu pola waktu, cari baris pertama yang logis
             if (reviewer === "Google Reviewer 🤖" && lines.length > 0) {
                 for (let line of lines) {
-                    if (!line.includes("Google") && !line.includes("Share") && !line.includes("Maps") && line.length > 2) {
+                    if (!skipPattern.test(line) && line.length > 2) {
                         reviewer = line;
                         break;
                     }
                 }
             }
             
-            // BERSHKAN SISA KARAKTER OCR (VERSI SUPER KETAT):
-            // 1. Bersihkan karakter non-huruf di ujung-ujung
-            reviewer = reviewer.replace(/^[^a-zA-Z]+/g, '').trim(); 
-            // 2. Hapus sisa huruf tunggal tak logis di depan akibat noise foto profil (Cth: "Q Slice..." -> "Slice...")
-            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, '').trim();
-            // 3. Bersihkan kembali sisa simbol di ujung akhir
-            reviewer = reviewer.replace(/[^a-zA-Z0-9\s]+$/g, '').trim();
+            // BERSHKAN SISA KARAKTER OCR:
+            reviewer = reviewer.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
+            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); 
             
             return reviewer.trim();
         }
@@ -991,7 +992,7 @@
                         }
                     );
                     
-                    // Deteksi nama reviewer sesungguhnya dari OCR (MENGGUNAKAN PARSER BARU ANTI SISA ANGKA/KARAKTER SAMPAH)
+                    // Deteksi nama reviewer sesungguhnya dari OCR 
                     accountInput = parseReviewerNameFromOcr(ocrResult.data.text);
 
                     // ==========================================
@@ -1060,22 +1061,14 @@
                     let availableClaims = Math.floor(newTotal / 5) - currentClaims;
                     let finalAvailable = availableClaims > 0 ? availableClaims : 0;
 
-                    // Ambil Pesan Acak dari File Kamus Baru (ai-dictionary.js) jika tersedia
+                    // Panggil fungsi dari ai-dictionary.js yang baru!
                     let finalMsg = "";
                     if (typeof generateAIResponse === "function") {
-                        // PANGGIL KAMUS DICTIONARY BARU DENGAN PARAMETER NAMA REVIEWER KONSUMEN ASLI!
-                        finalMsg = generateAIResponse(nameInput, newTotal, finalAvailable, accountInput);
+                        // Jika ai-dictionary.js berhasil diload, gunakan ribuan variasi kata dari sana
+                        finalMsg = generateAIResponse(nameInput, newTotal, finalAvailable);
                     } else {
-                        // Fallback lokal jika file dictionary belum siap
-                        const aiTemplates = [
-                            "Wah cakep banget {nama}! Ulasan dari {reviewer} terdeteksi bintang 5 sempurna. Sekarang total review kamu ada {total} lho! 🎉",
-                            "Mantap {nama}, bukti review dari {reviewer} berhasil tervalidasi! Total koleksi poin kamu udah tembus {total}. Gas terus! 🔥"
-                        ];
-                        const randomMsg = aiTemplates[Math.floor(Math.random() * aiTemplates.length)];
-                        finalMsg = randomMsg
-                            .replace(/{nama}/g, nameInput)
-                            .replace(/{reviewer}/g, `<strong>${accountInput}</strong>`)
-                            .replace(/{total}/g, newTotal);
+                        // Fallback (Pengaman darurat) jika ai-dictionary.js gagal terbaca
+                        finalMsg = `Wah cakep banget ${nameInput}! Ulasan dari <strong>${accountInput}</strong> terdeteksi bintang 5 sempurna. Sekarang total review kamu ada ${newTotal} lho! 🎉`;
                     }
 
                     // Tampilkan Balasan Chat AI
