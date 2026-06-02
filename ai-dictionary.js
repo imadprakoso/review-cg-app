@@ -37,26 +37,23 @@ const intiAI = [
     "Satu lagi bukti dedikasi {nama} terekam lewat akun {reviewer}."
 ];
 
-// 3. PENUTUP (Informasi Poin, Sisa Claim, Motivasi Tim)
+// 3. PENUTUP (Fokus Eksklusif ke Total Poin)
 const penutupAI = [
     "Sekarang poin kamu ada {total}. Gas terus!",
     "Total koleksi kamu tembus {total} review. Jangan kasih kendor!",
-    "Dengan poin sebanyak {total} ini, jatah claim reward kamu tersisa {sisa} lagi.",
     "Makin gacor aja nih. Posisi poin sekarang di angka {total} 🚀",
     "Kumpulkan terus poinnya! Poin saat ini: {total}.",
-    "Sisa {sisa} slot claim lagi nungguin buat diambil. Ayo kejar!",
     "Pertahankan ritmenya! Poin {total} udah ada di tangan.",
-    "Masih ada sisa claim {sisa}x, yuk kumpulin lagi biar makin cuan.",
     "Angka {total} poin ini bukti kerja kerasmu. Keep it up!",
     "Cek dashboard deh, angka {total} poin kamu keren banget.",
-    "Target claim masih sisa {sisa}, sikat terus sebelum kehabisan!",
     "Total {total} review udah kamu kumpulin sejauh ini. Respect! 🫡",
-    "Posisi aman, kumpulkan terus sampai sisa claim yang {sisa} ini terpakai semua!",
-    "Buktikan siapa yang paling rajin! Poin kamu di klasemen sekarang {total}."
+    "Buktikan siapa yang paling rajin! Poin kamu di klasemen sekarang {total}.",
+    "Keren banget! Poin kamu meroket ke angka {total}.",
+    "Dengan tambahan ini, total kontribusi kamu jadi {total} poin. Mantap!"
 ];
 
 // ==========================================
-// FUNGSI GENERATOR UTAMA (Terima 4 Parameter Sekarang)
+// FUNGSI GENERATOR UTAMA
 // ==========================================
 function generateAIResponse(namaUser, totalPoin, sisaClaim, namaReviewer) {
     // Ambil kata acak dari masing-masing array
@@ -67,11 +64,10 @@ function generateAIResponse(namaUser, totalPoin, sisaClaim, namaReviewer) {
     // Gabungkan menjadi satu string utuh
     let kalimatUtuh = `${randomAwalan} ${randomInti} ${randomPenutup}`;
     
-    // Replace placeholder dengan data real-time
+    // Replace placeholder dengan data real-time (Info sisa claim diabaikan)
     kalimatUtuh = kalimatUtuh.replace(/{nama}/g, namaUser)
                              .replace(/{reviewer}/g, namaReviewer)
-                             .replace(/{total}/g, totalPoin)
-                             .replace(/{sisa}/g, sisaClaim);
+                             .replace(/{total}/g, totalPoin);
                              
     return kalimatUtuh;
 }
