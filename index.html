@@ -328,11 +328,11 @@
         </div>
     </div>
 
-    <!-- Memuat kamus kata-kata AI dari file terpisah -->
+    <!-- Memuat kamus kata-kata AI -->
     <script src="ai-dictionary.js"></script>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwj8uI-0hkNcK9t_VC9Kssi5JHEsxzT9TliCWqXPJBs_FQng7d8ObAIiOE2vWek6LWR6g/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
         
         let rawData = []; 
         let filteredData = {}; 
@@ -346,7 +346,7 @@
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             
             // Konversi ke format YYYY-MM-DD untuk kalender HTML
-            // Agar zona waktu konsisten dan real-time, dapatkan offset waktu lokal
+            // Agar zona waktu konsisten, gunakan penyesuaian offset lokal sebelum konversi ISO
             const offset = startOfMonth.getTimezoneOffset() * 60000;
             const localStart = new Date(startOfMonth.getTime() - offset);
             const localNow = new Date(now.getTime() - offset);
@@ -748,12 +748,12 @@
 
             const maxScore = masterData[0].totalScore;
             const gradients = {
-                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", 
-                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     
-                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   
-                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   
-                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",
-                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    
+                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", // Gold
+                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     // Blue
+                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   // Green
+                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   // Purple
+                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",// Pink
+                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    // Orange
             };
 
             masterData.forEach((item, index) => {
@@ -785,7 +785,7 @@
         function animateBars() {
             const bars = document.querySelectorAll('.v-bar-fill');
             bars.forEach(bar => { 
-                bar.offsetHeight; 
+                bar.offsetHeight; // Force reflow
                 bar.style.height = bar.getAttribute('data-height'); 
                 bar.classList.add('animated'); 
             });
@@ -859,8 +859,6 @@
             
             // Pola Maps seperti "menit lalu", "jam lalu", "ago", "★" dsb
             const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
-            
-            // Pola yang harus diabaikan saat mencari nama asli
             const skipPattern = /(local guide|ulasan|foto|review|google|share|maps)/i;
             
             for (let i = 0; i < lines.length; i++) {
@@ -888,7 +886,7 @@
                 }
             }
             
-            // BERSHKAN SISA KARAKTER OCR:
+            // BERSHKAN SISA KARAKTER OCR
             reviewer = reviewer.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
             reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); 
             
@@ -992,7 +990,7 @@
                         }
                     );
                     
-                    // Deteksi nama reviewer sesungguhnya dari OCR 
+                    // Deteksi nama reviewer sesungguhnya dari OCR
                     accountInput = parseReviewerNameFromOcr(ocrResult.data.text);
 
                     // ==========================================
@@ -1056,18 +1054,16 @@
                     let currentUser = branchUsers.find(u => u.name.toLowerCase() === nameInput.toLowerCase());
                     let newTotal = currentUser ? currentUser.score + 1 : 1;
                     
-                    // Ambil sisa claim untuk diletakkan di response
+                    // Ambil sisa claim
                     let currentClaims = currentUser ? currentUser.claimedCount : 0;
                     let availableClaims = Math.floor(newTotal / 5) - currentClaims;
                     let finalAvailable = availableClaims > 0 ? availableClaims : 0;
 
-                    // Panggil fungsi dari ai-dictionary.js yang baru!
-                    let finalMsg = "";
+                    // Panggil dari kamus (4 Parameter)
+                    let finalMsg = "Balasan AI Error";
                     if (typeof generateAIResponse === "function") {
-                        // Jika ai-dictionary.js berhasil diload, gunakan ribuan variasi kata dari sana
-                        finalMsg = generateAIResponse(nameInput, newTotal, finalAvailable);
+                        finalMsg = generateAIResponse(nameInput, newTotal, finalAvailable, `<strong>${accountInput}</strong>`);
                     } else {
-                        // Fallback (Pengaman darurat) jika ai-dictionary.js gagal terbaca
                         finalMsg = `Wah cakep banget ${nameInput}! Ulasan dari <strong>${accountInput}</strong> terdeteksi bintang 5 sempurna. Sekarang total review kamu ada ${newTotal} lho! 🎉`;
                     }
 
