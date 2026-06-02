@@ -852,37 +852,39 @@
             const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             let reviewer = "Google Reviewer 🤖";
             
-            // Pola Maps seperti "menit lalu", "jam lalu", "ago", "★" dsb
+            // Pola Maps yang sering muncul
             const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
+            const skipPattern = /(ulasan|foto|review|photo|local\s*guide)/i;
             
             for (let i = 0; i < lines.length; i++) {
                 if (timePattern.test(lines[i])) {
-                    // Baris sebelum baris rating/tanggal ini adalah nama reviewer!
-                    if (i > 0) {
-                        let potentialName = lines[i - 1];
-                        // Hilangkan baris aneh yang tidak logis sebagai nama manusia
-                        if (!potentialName.includes("Google") && !potentialName.includes("Share") && potentialName.length > 2) {
+                    // Cek baris-baris sebelumnya untuk mencari nama, lewati jika itu info Local Guide
+                    for (let j = i - 1; j >= 0; j--) {
+                        let potentialName = lines[j];
+                        if (potentialName.length > 2 && 
+                            !skipPattern.test(potentialName) && 
+                            !potentialName.includes("Google") && 
+                            !potentialName.includes("Share")) {
                             reviewer = potentialName;
                             break;
                         }
                     }
+                    if (reviewer !== "Google Reviewer 🤖") break;
                 }
             }
             
-            // Fallback: Jika tidak ketemu pola waktu, gunakan baris pertama non-aplikatif
+            // Fallback
             if (reviewer === "Google Reviewer 🤖" && lines.length > 0) {
                 for (let line of lines) {
-                    if (!line.includes("Google") && !line.includes("Share") && !line.includes("Maps") && line.length > 2) {
+                    if (!line.includes("Google") && !line.includes("Share") && !line.includes("Maps") && !skipPattern.test(line) && line.length > 2) {
                         reviewer = line;
                         break;
                     }
                 }
             }
             
-            // BERSHKAN SISA KARAKTER OCR: Hapus huruf tunggal aneh di depan (seperti "Q ", "l ", "| ") 
-            // dan bersihkan dari karakter non-alfanumerik di ujungnya.
             reviewer = reviewer.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
-            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); // Menghapus "Q Slice of Romance" menjadi "Slice of Romance"
+            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); 
             
             return reviewer.trim();
         }
