@@ -150,7 +150,7 @@
     <div class="w-full max-w-4xl">
         <div class="text-center mb-6">
             <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-2">
-                Review Maps Challenge
+                Rating Maps Challenges
             </h1>
             <p class="text-[#8E8E93] text-sm md:text-base">Mengejar bintang, membangun kepercayaan.</p>
         </div>
@@ -328,6 +328,9 @@
         </div>
     </div>
 
+    <!-- Memuat kamus kata-kata AI -->
+    <script src="ai-dictionary.js"></script>
+
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
         
@@ -343,7 +346,7 @@
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             
             // Konversi ke format YYYY-MM-DD untuk kalender HTML
-            // Agar zona waktu konsisten, gunakan penyesuaian offset lokal sebelum konversi ISO
+            // Agar zona waktu konsisten dan real-time, dapatkan offset waktu lokal
             const offset = startOfMonth.getTimezoneOffset() * 60000;
             const localStart = new Date(startOfMonth.getTime() - offset);
             const localNow = new Date(now.getTime() - offset);
@@ -699,6 +702,7 @@
             renderMasterChart();
         }
 
+        // FUNGSI SIMULASI DUMMY DATA UNTUK TEST ANIMASI
         function runSimulation() {
             filteredData.master = [
                 { branch: "Purwakarta", totalScore: 166 },
@@ -852,39 +856,40 @@
             const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             let reviewer = "Google Reviewer 🤖";
             
-            // Pola Maps yang sering muncul
+            // Pola Maps seperti "menit lalu", "jam lalu", "ago", "★" dsb
             const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
-            const skipPattern = /(ulasan|foto|review|photo|local\s*guide)/i;
             
             for (let i = 0; i < lines.length; i++) {
                 if (timePattern.test(lines[i])) {
-                    // Cek baris-baris sebelumnya untuk mencari nama, lewati jika itu info Local Guide
-                    for (let j = i - 1; j >= 0; j--) {
-                        let potentialName = lines[j];
-                        if (potentialName.length > 2 && 
-                            !skipPattern.test(potentialName) && 
-                            !potentialName.includes("Google") && 
-                            !potentialName.includes("Share")) {
+                    // Baris sebelum baris rating/tanggal ini adalah nama reviewer!
+                    if (i > 0) {
+                        let potentialName = lines[i - 1];
+                        // Hilangkan baris aneh yang tidak logis sebagai nama manusia
+                        if (!potentialName.includes("Google") && !potentialName.includes("Share") && potentialName.length > 2) {
                             reviewer = potentialName;
                             break;
                         }
                     }
-                    if (reviewer !== "Google Reviewer 🤖") break;
                 }
             }
             
-            // Fallback
+            // Fallback: Jika tidak ketemu pola waktu, gunakan baris pertama non-aplikatif
             if (reviewer === "Google Reviewer 🤖" && lines.length > 0) {
                 for (let line of lines) {
-                    if (!line.includes("Google") && !line.includes("Share") && !line.includes("Maps") && !skipPattern.test(line) && line.length > 2) {
+                    if (!line.includes("Google") && !line.includes("Share") && !line.includes("Maps") && line.length > 2) {
                         reviewer = line;
                         break;
                     }
                 }
             }
             
-            reviewer = reviewer.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
-            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); 
+            // BERSHKAN SISA KARAKTER OCR (VERSI SUPER KETAT):
+            // 1. Bersihkan karakter non-huruf di ujung-ujung
+            reviewer = reviewer.replace(/^[^a-zA-Z]+/g, '').trim(); 
+            // 2. Hapus sisa huruf tunggal tak logis di depan akibat noise foto profil (Cth: "Q Slice..." -> "Slice...")
+            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, '').trim();
+            // 3. Bersihkan kembali sisa simbol di ujung akhir
+            reviewer = reviewer.replace(/[^a-zA-Z0-9\s]+$/g, '').trim();
             
             return reviewer.trim();
         }
@@ -892,9 +897,6 @@
         // ==========================================
         // LOGIKA SUBMIT DAN CHAT AI
         // ==========================================
-        
-        // Array aiTemplates lama telah dihapus/dipindahkan ke ai-dictionary.js
-
         document.getElementById('reviewForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -989,7 +991,7 @@
                         }
                     );
                     
-                    // Deteksi nama reviewer sesungguhnya dari OCR
+                    // Deteksi nama reviewer sesungguhnya dari OCR (MENGGUNAKAN PARSER BARU ANTI SISA ANGKA/KARAKTER SAMPAH)
                     accountInput = parseReviewerNameFromOcr(ocrResult.data.text);
 
                     // ==========================================
@@ -1052,20 +1054,28 @@
                     const branchUsers = filteredData.branches[branchInput]?.userList || [];
                     let currentUser = branchUsers.find(u => u.name.toLowerCase() === nameInput.toLowerCase());
                     let newTotal = currentUser ? currentUser.score + 1 : 1;
+                    
+                    // Ambil sisa claim untuk diletakkan di response
+                    let currentClaims = currentUser ? currentUser.claimedCount : 0;
+                    let availableClaims = Math.floor(newTotal / 5) - currentClaims;
+                    let finalAvailable = availableClaims > 0 ? availableClaims : 0;
 
-                    // Ambil Pesan dari File Kamus Eksternal (ai-dictionary.js)
-                    let finalMsg = "Setoran berhasil diterima!"; // Fallback message
-                    try {
-                        // Memanggil fungsi generateAIResponse dari ai-dictionary.js
-                        // Fungsi ini akan mengacak kata dan mengganti variabel {nama}, {total}, dll.
-                        finalMsg = generateAIResponse(nameInput, newTotal, ""); 
-                        
-                        // Sisipkan nama reviewer riil yang dapet dari OCR
-                        finalMsg = finalMsg.replace(/{reviewer}/g, `<strong>${accountInput}</strong>`);
-                    } catch (err) {
-                        console.warn("Kamus AI belum terhubung atau ada error:", err);
-                        // Fallback manual jika file ai-dictionary.js gagal dimuat
-                        finalMsg = `Wah cakep banget ${nameInput}! Ulasan dari <strong>${accountInput}</strong> terdeteksi bintang 5 sempurna. Sekarang total review kamu ada ${newTotal} lho! 🎉`;
+                    // Ambil Pesan Acak dari File Kamus Baru (ai-dictionary.js) jika tersedia
+                    let finalMsg = "";
+                    if (typeof generateAIResponse === "function") {
+                        // PANGGIL KAMUS DICTIONARY BARU DENGAN PARAMETER NAMA REVIEWER KONSUMEN ASLI!
+                        finalMsg = generateAIResponse(nameInput, newTotal, finalAvailable, accountInput);
+                    } else {
+                        // Fallback lokal jika file dictionary belum siap
+                        const aiTemplates = [
+                            "Wah cakep banget {nama}! Ulasan dari {reviewer} terdeteksi bintang 5 sempurna. Sekarang total review kamu ada {total} lho! 🎉",
+                            "Mantap {nama}, bukti review dari {reviewer} berhasil tervalidasi! Total koleksi poin kamu udah tembus {total}. Gas terus! 🔥"
+                        ];
+                        const randomMsg = aiTemplates[Math.floor(Math.random() * aiTemplates.length)];
+                        finalMsg = randomMsg
+                            .replace(/{nama}/g, nameInput)
+                            .replace(/{reviewer}/g, `<strong>${accountInput}</strong>`)
+                            .replace(/{total}/g, newTotal);
                     }
 
                     // Tampilkan Balasan Chat AI
@@ -1228,10 +1238,6 @@
         function executePendingAction() { if (pendingAdminAction) pendingAdminAction(); }
 
     </script>
-    
-    <!-- Memuat kamus kata-kata AI -->
-    <script src="ai-dictionary.js"></script>
-
 </body>
 
 </html>
