@@ -555,7 +555,7 @@
         }
 
         // ==========================================
-        // PARSING KALIMAT AI (NLP SIMULASI)
+        // PARSING KALIMAT AI (NLP SIMULASI) - UPDATE TANGKAP ANGKA
         // ==========================================
         function parseAiMessage(text) {
             const cleanText = text.toLowerCase().trim();
@@ -572,67 +572,59 @@
 
             if (!detectedBranch) return null;
 
-            // 2. Deteksi Nama (Cari kecocokan dengan data lama dulu)
+            // 2. Deteksi Nama 
             let detectedName = null;
             const branchUsers = filteredData.branches[detectedBranch]?.userList || [];
-            
             for (let user of branchUsers) {
                 if (cleanText.includes(user.name.toLowerCase())) {
                     detectedName = user.name;
                     break;
                 }
             }
-
-            // Fallback: Gunakan regex jika nama baru pertama kali input
             if (!detectedName) {
-                // Mencari pola "aku [nama]," atau "saya [nama] mau" atau "nama saya [nama]"
                 const match = text.match(/(?:aku|saya|nama|atas\s+nama)\s+([a-zA-Z\s]{2,20})/i);
                 if (match && match[1]) {
-                    // Bersihkan dari sisa kata hubung
                     detectedName = match[1].replace(/\b(mau|setor|dari|untuk|team|tim)\b/gi, "").trim();
-                    // Kapitalisasi kata
                     detectedName = detectedName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                 }
             }
 
-            return { branch: detectedBranch, name: detectedName };
+            // 3. DETEKSI ANGKA REVIEW (Berapa yang mau disetor?) - BARU
+            let requestedAmount = 1; // Default
+            const amountMatch = text.match(/(\d+)\s*(?:review|ulasan|bintang)/i);
+            if (amountMatch && amountMatch[1]) {
+                requestedAmount = parseInt(amountMatch[1]);
+            }
+
+            return { branch: detectedBranch, name: detectedName, amount: requestedAmount };
         }
 
         // ==========================================
-        // DETEKSI MULTI-REVIEWER DARI OCR (BARU)
+        // DETEKSI MULTI-REVIEWER DARI OCR
         // ==========================================
         function parseReviewerNamesFromOcr(text) {
             const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             let reviewers = [];
-            
-            // Pola mencari baris yang mengandung indikator waktu/bintang review
             const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
-            
-            // PERBAIKAN: Pola kata kunci profil ATAU tombol UI Maps yang harus diabaikan/dilewati
             const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya|suka|bagikan|like)/i;
 
             for (let i = 0; i < lines.length; i++) {
                 if (timePattern.test(lines[i])) {
-                    // Jika ketemu baris bintang/waktu, mendaki ke atas mencari nama asli
                     for (let j = i - 1; j >= 0; j--) {
                         let potentialName = lines[j];
-                        // Jika baris BUKAN kata kunci profil/tombol UI dan panjangnya masuk akal
                         if (!skipPattern.test(potentialName) && potentialName.length > 2) {
-                            
-                            // 1. Bersihkan sisa karakter non-alfanumerik di ujung kiri dan kanan
                             let cleanName = potentialName.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
-                            // 2. Potong huruf-huruf tunggal nyasar di awal kata (contoh: "0 Bima Kawindra" -> "Bima Kawindra")
                             cleanName = cleanName.replace(/^[a-zA-Z0-9]\s+/i, '');
                             
+                            // Validasi tambahan: Nama orang biasanya nggak cuma 1-2 huruf
                             if (cleanName.length > 2 && !reviewers.includes(cleanName)) {
                                 reviewers.push(cleanName);
                             }
-                            break; // Stop mendaki jika sudah ketemu nama untuk review ini
+                            break; 
                         }
                     }
                 }
             }
-            
             return reviewers;
         }
 
@@ -902,10 +894,9 @@
             if (inputMode === 'manual') {
                 branchInput = document.getElementById('inputBranch').value;
                 nameInput = document.getElementById('inputName').value.trim();
-                accountInput = document.getElementById('inputAccount').value.trim();
+                accountInput = document.getElementById('inputAccount').value.trim().toLowerCase();
                 linkInput = document.getElementById('inputLink').value.trim();
 
-                // Validasi Anti Duplikat Manual
                 let isDuplicate = false;
                 let submittedBy = "";
                 const branchUsers = filteredData.branches[branchInput]?.userList || [];
@@ -913,7 +904,7 @@
                 for (let p of branchUsers) {
                     if (p.accountsStr) {
                         let userAccounts = p.accountsStr.split("||");
-                        if (userAccounts.includes(accountInput.toLowerCase())) {
+                        if (userAccounts.includes(accountInput)) {
                             isDuplicate = true;
                             submittedBy = p.name;
                             break;
@@ -940,6 +931,7 @@
                     confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#007AFF', '#34C759', '#FFD60A'] });
                     showMessage('Poin berhasil ditambahkan!', 'success');
                     document.getElementById('reviewForm').reset();
+                    
                     document.getElementById('branchFilter').value = branchInput;
                     setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
 
@@ -953,11 +945,10 @@
 
             } else {
                 // ==========================================
-                // KONDISI AI MODE MULTI-REVIEW
+                // KONDISI AI MODE MULTI-REVIEW (DI-LOCK SESUAI PESAN)
                 // ==========================================
                 pesanAI = document.getElementById('inputPesanAI').value.trim();
                 
-                // Parse Nama dan Cabang
                 const parsedResult = parseAiMessage(pesanAI);
                 
                 if (!parsedResult || !parsedResult.branch || !parsedResult.name) {
@@ -973,8 +964,8 @@
 
                 branchInput = parsedResult.branch;
                 nameInput = parsedResult.name;
+                const requestedAmount = parsedResult.amount; // Berapa review yang mau disetor?
 
-                // Transisi UI Chat
                 document.getElementById('form-wrapper').classList.add('hidden');
                 document.getElementById('form-title').classList.add('hidden');
                 document.getElementById('form-subtitle').classList.add('hidden');
@@ -985,7 +976,6 @@
                 
                 document.getElementById('chat-user-text').innerText = pesanAI;
 
-                // EKSEKUSI OCR
                 const imageFile = fileInput.files[0];
                 const ocrBubble = document.querySelector('#ai-typing .chat-bubble');
                 ocrBubble.innerHTML = `<span></span><span></span><span></span> AI sedang memindai reviewer dari gambar...`;
@@ -999,14 +989,18 @@
                         }
                     });
                     
-                    // Ekstrak SEMUA nama reviewer yang ada di gambar (mengembalikan Array)
                     let extractedNames = parseReviewerNamesFromOcr(ocrResult.data.text);
                     
                     if (extractedNames.length === 0) {
-                        extractedNames = ["Reviewer via AI 🤖"]; // Fallback jika OCR nge-blank
+                        extractedNames = ["Reviewer via AI 🤖"];
                     }
 
-                    // VALIDASI PARTIAL: Pisahkan mana yang valid, mana yang duplikat
+                    // KUNCI UTAMA: Potong hasil OCR berdasarkan jumlah yang di-request user di Chat!
+                    // Kalau OCR dapet 5, tapi user bilang "setor 2", ya kita potong keranjangnya jadi 2 teratas aja!
+                    if (extractedNames.length > requestedAmount) {
+                        extractedNames = extractedNames.slice(0, requestedAmount);
+                    }
+
                     let validNames = [];
                     let duplicateNames = [];
                     const branchUsers = filteredData.branches[branchInput]?.userList || [];
@@ -1038,7 +1032,6 @@
                         }
                     }
 
-                    // POST KE DATABASE (Hanya yang Valid)
                     if (validNames.length > 0) {
                         for (let vName of validNames) {
                             await fetch(API_URL, {
@@ -1050,27 +1043,28 @@
                         }
                     }
 
-                    // HITUNG POIN BARU
                     let currentUser = branchUsers.find(u => u.name.toLowerCase() === nameInput.toLowerCase());
                     let currentTotal = currentUser ? currentUser.score : 0;
                     let newTotal = currentTotal + validNames.length;
 
-                    // GENERATE BALASAN AI (Lewat Kamus Eksternal)
-                    let finalMsg = "AI Error membaca kamus.";
+                    let finalMsg = "AI Error.";
                     if (typeof generateAIResponse === "function") {
+                        // Memanggil ai-dictionary.js
                         finalMsg = generateAIResponse(nameInput, newTotal, validNames, duplicateNames);
                     } else {
-                        // Fallback darurat jika ai-dictionary.js gagal dimuat
+                        // Fallback jika ai-dictionary.js gagal load (Menggunakan arrays)
+                        let validStr = validNames.map(n => `<strong>${n}</strong>`).join(", ");
+                        let dupStr = duplicateNames.map(d => `<strong>${d.name}</strong>`).join(", ");
+                        
                         if (validNames.length > 0 && duplicateNames.length === 0) {
-                            finalMsg = `Cakep ${nameInput}! ${validNames.length} review valid. Poin kamu: ${newTotal}.`;
+                            finalMsg = `Cakep ${nameInput}! Review dari ${validStr} lolos sensor. Poin kamu naik jadi ${newTotal}.`;
                         } else if (validNames.length === 0) {
-                            finalMsg = `Waduh, semua review udah diklaim orang lain. Poin tetep ${newTotal}.`;
+                            finalMsg = `Waduh ${nameInput}, semua review (${dupStr}) udah pernah diklaim orang lain. Poin kamu tetep ${newTotal}.`;
                         } else {
-                            finalMsg = `Sistem nerima ${validNames.length} review, sisanya duplikat. Total poin: ${newTotal}.`;
+                            finalMsg = `Review ${validStr} lolos, tapi sayang review ${dupStr} duplikat. Poin kamu sekarang ${newTotal}.`;
                         }
                     }
 
-                    // Tampilkan Hasil Chat
                     setTimeout(() => {
                         document.getElementById('ai-typing').classList.add('hidden');
                         document.getElementById('ai-response').classList.remove('hidden');
@@ -1081,7 +1075,7 @@
                             confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#AF52DE', '#FFD60A'] });
                         }
                         
-                        fetchData(); // Silently update background data
+                        fetchData(); 
                     }, 1000);
 
                 } catch (err) {
@@ -1121,9 +1115,6 @@
             document.getElementById('form-subtitle').classList.remove('hidden');
         }
 
-        // ==========================================
-        // APPLE STYLE MODALS 
-        // ==========================================
         function toggleAdminMode() { 
             const isAdminOn = document.body.classList.contains('admin-mode-on');
             if (isAdminOn) {
