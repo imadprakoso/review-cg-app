@@ -338,7 +338,7 @@
 
     <!-- 2. OTAK UTAMA APLIKASI -->
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzWbwWyybWoqutWQyEDEI0JrkZnygbO7IV9eYE82Dp0172sY-uvY1aDIdJpZodpzeI88Q/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
         
         let rawData = []; 
         let filteredData = {}; 
@@ -600,39 +600,57 @@
         }
 
         // ==========================================
-        // DETEKSI MULTI-REVIEWER DARI OCR
+        // DETEKSI MULTI-REVIEWER DARI OCR (THE ULTIMATE ANCHOR)
         // ==========================================
         function parseReviewerNamesFromOcr(text) {
             const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             let reviewers = [];
-            
-            // Pola mencari baris yang mengandung indikator waktu/bintang review
-            const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|\d+\s*★|★|star)/i;
-            
-            // Pola kata kunci profil ATAU tombol UI Maps yang harus diabaikan/dilewati
-            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya|suka|bagikan|like|baru)/i;
 
-            for (let i = 0; i < lines.length; i++) {
-                if (timePattern.test(lines[i])) {
-                    // Jika ketemu baris bintang/waktu, mendaki ke atas mencari nama asli
-                    for (let j = i - 1; j >= 0; j--) {
-                        let potentialName = lines[j];
-                        // Jika baris BUKAN kata kunci profil/tombol UI dan panjangnya masuk akal
-                        if (!skipPattern.test(potentialName) && potentialName.length > 2) {
-                            
-                            // 1. Bersihkan sisa karakter non-alfanumerik di ujung kiri dan kanan
-                            let cleanName = potentialName.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
-                            // 2. Potong huruf-huruf tunggal nyasar di awal kata
-                            cleanName = cleanName.replace(/^[a-zA-Z0-9]\s+/i, '');
-                            
-                            if (cleanName.length > 2 && !reviewers.includes(cleanName)) {
-                                reviewers.push(cleanName);
+            // KITA RUBAH TOTAL LOGIKANYA!
+            // Alih-alih nyari bintang, kita nyari baris status "ulasan" 
+            // Karena di Google Maps, tepat 1 baris di atas teks "ulasan" PASTI nama orangnya.
+
+            for (let i = 1; i < lines.length; i++) {
+                // Jika baris INI mengandung kata "ulasan" (contoh: "4 ulasan · 1 foto" atau "Local Guide · 93 ulasan")
+                if (lines[i].toLowerCase().includes("ulasan")) {
+                    
+                    // MAKA, baris TEPAT DI ATASNYA adalah nama orangnya!
+                    let potentialName = lines[i - 1];
+
+                    // Bersihkan dari sisa karakter aneh OCR
+                    let cleanName = potentialName.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
+                    cleanName = cleanName.replace(/^[a-zA-Z0-9]\s+/i, ''); // Hapus "Q " nyasar
+                    
+                    // Pastikan panjangnya masuk akal (bukan cuma 1-2 huruf sampah)
+                    if (cleanName.length > 2 && !reviewers.includes(cleanName)) {
+                        reviewers.push(cleanName);
+                    }
+                }
+            }
+
+            // FALLBACK DARURAT: Jika ternyata formatnya beda dan nggak nemu kata "ulasan" sama sekali,
+            // barulah kita pakai metode lama (mencari berdasarkan pola bintang/waktu).
+            if (reviewers.length === 0) {
+                const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
+                const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya|suka|bagikan|like|baru)/i;
+
+                for (let i = 0; i < lines.length; i++) {
+                    if (timePattern.test(lines[i])) {
+                        for (let j = i - 1; j >= 0; j--) {
+                            let potentialName = lines[j];
+                            if (!skipPattern.test(potentialName) && potentialName.length > 2) {
+                                let cleanName = potentialName.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
+                                cleanName = cleanName.replace(/^[a-zA-Z0-9]\s+/i, '');
+                                if (cleanName.length > 2 && !reviewers.includes(cleanName)) {
+                                    reviewers.push(cleanName);
+                                }
+                                break; 
                             }
-                            break; // Stop mendaki jika sudah ketemu satu nama untuk review ini
                         }
                     }
                 }
             }
+
             return reviewers;
         }
 
@@ -749,7 +767,6 @@
                 { branch: "Cianjur", totalScore: 61 }
             ];
 
-            // Setup mock data agar tab Divisi tidak error
             const mockUsers = [
                 {name: "Dummy Pro", score: 50, accountsStr: ""},
                 {name: "Dummy Noob", score: 10, accountsStr: ""}
