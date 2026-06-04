@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     
     <style>
         body { 
@@ -740,6 +741,7 @@
                 { branch: "Cianjur", totalScore: 61 }
             ];
 
+            // Setup mock data agar tab Divisi tidak error
             const mockUsers = [
                 {name: "Dummy Pro", score: 50, accountsStr: ""},
                 {name: "Dummy Noob", score: 10, accountsStr: ""}
@@ -773,13 +775,14 @@
             }
 
             const maxScore = masterData[0].totalScore;
+            
             const gradients = {
-                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", 
-                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     
-                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   
-                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   
-                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",
-                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    
+                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", // Gold
+                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     // Blue
+                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   // Green
+                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   // Purple
+                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",// Pink
+                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    // Orange
             };
 
             masterData.forEach((item, index) => {
@@ -805,13 +808,14 @@
                 const topBranch = masterData[0].branch;
                 document.getElementById('branchFilter').value = topBranch;
             }
+
             renderDivisiList();
         }
 
         function animateBars() {
             const bars = document.querySelectorAll('.v-bar-fill');
             bars.forEach(bar => { 
-                bar.offsetHeight; 
+                bar.offsetHeight; // Force reflow
                 bar.style.height = bar.getAttribute('data-height'); 
                 bar.classList.add('animated'); 
             });
