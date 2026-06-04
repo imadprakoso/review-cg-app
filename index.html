@@ -605,22 +605,30 @@
         function parseReviewerNamesFromOcr(text) {
             const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             let reviewers = [];
-            const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
-            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya|suka|bagikan|like)/i;
+            
+            // Pola mencari baris yang mengandung indikator waktu/bintang review
+            const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|\d+\s*★|★|star)/i;
+            
+            // Pola kata kunci profil ATAU tombol UI Maps yang harus diabaikan/dilewati
+            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya|suka|bagikan|like|baru)/i;
 
             for (let i = 0; i < lines.length; i++) {
                 if (timePattern.test(lines[i])) {
+                    // Jika ketemu baris bintang/waktu, mendaki ke atas mencari nama asli
                     for (let j = i - 1; j >= 0; j--) {
                         let potentialName = lines[j];
+                        // Jika baris BUKAN kata kunci profil/tombol UI dan panjangnya masuk akal
                         if (!skipPattern.test(potentialName) && potentialName.length > 2) {
+                            
+                            // 1. Bersihkan sisa karakter non-alfanumerik di ujung kiri dan kanan
                             let cleanName = potentialName.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
+                            // 2. Potong huruf-huruf tunggal nyasar di awal kata
                             cleanName = cleanName.replace(/^[a-zA-Z0-9]\s+/i, '');
                             
-                            // Validasi tambahan: Nama orang biasanya nggak cuma 1-2 huruf
                             if (cleanName.length > 2 && !reviewers.includes(cleanName)) {
                                 reviewers.push(cleanName);
                             }
-                            break; 
+                            break; // Stop mendaki jika sudah ketemu satu nama untuk review ini
                         }
                     }
                 }
