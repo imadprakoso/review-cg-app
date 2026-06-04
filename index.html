@@ -4,14 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Maps Challenge</title>
+    <title>CG Maps Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <!-- Tesseract.js untuk OCR gratis membaca nama reviewer langsung dari gambar screenshot -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     
     <style>
         body { 
@@ -338,7 +337,7 @@
 
     <!-- 2. OTAK UTAMA APLIKASI -->
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzWbwWyybWoqutWQyEDEI0JrkZnygbO7IV9eYE82Dp0172sY-uvY1aDIdJpZodpzeI88Q/exec";
         
         let rawData = []; 
         let filteredData = {}; 
@@ -1049,10 +1048,9 @@
 
                     let finalMsg = "AI Error.";
                     if (typeof generateAIResponse === "function") {
-                        // Memanggil ai-dictionary.js
                         finalMsg = generateAIResponse(nameInput, newTotal, validNames, duplicateNames);
                     } else {
-                        // Fallback jika ai-dictionary.js gagal load (Menggunakan arrays)
+                        // Fallback yang lebih sopan dan jelas
                         let validStr = validNames.map(n => `<strong>${n}</strong>`).join(", ");
                         let dupStr = duplicateNames.map(d => `<strong>${d.name}</strong>`).join(", ");
                         
@@ -1115,6 +1113,9 @@
             document.getElementById('form-subtitle').classList.remove('hidden');
         }
 
+        // ==========================================
+        // APPLE STYLE MODALS 
+        // ==========================================
         function toggleAdminMode() { 
             const isAdminOn = document.body.classList.contains('admin-mode-on');
             if (isAdminOn) {
@@ -1152,6 +1153,10 @@
                 closeAdminModal();
             }
         }
+
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyAdmin();
+        });
 
         let pendingAdminAction = null;
 
