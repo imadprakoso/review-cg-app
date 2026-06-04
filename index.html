@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     
     <style>
         body { 
@@ -150,6 +149,10 @@
     <!-- MAIN APP WRAPPER -->
     <div class="w-full max-w-4xl">
         <div class="text-center mb-6">
+            <div class="admin-indicator hidden text-[#FF3B30] text-xs font-bold tracking-widest uppercase mb-3 animate-pulse">
+                <i class="fa-solid fa-unlock-keyhole"></i> Super Admin Mode
+            </div>
+            
             <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-2">
                 Rating Maps Challenges
             </h1>
@@ -290,7 +293,7 @@
                         
                         <div>
                             <label class="block text-[13px] font-medium text-[#AF52DE] mb-1.5 ml-1"><i class="fa-solid fa-message"></i> Pesan ke AI Assistant <span class="text-[#FF3B30]">*</span></label>
-                            <textarea id="inputPesanAI" rows="3" placeholder="Contoh: Aku Nayla Reva, mau setor 1 Review untuk team aku CG ya" class="ios-input w-full px-4 py-3 text-white placeholder-[#636366] rounded-xl text-[14px] outline-none border border-[#AF52DE]/30 focus:border-[#AF52DE]"></textarea>
+                            <textarea id="inputPesanAI" rows="3" placeholder="Contoh: Aku Nayla Reva mau setor 2 Review untuk CG" class="ios-input w-full px-4 py-3 text-white placeholder-[#636366] rounded-xl text-[14px] outline-none border border-[#AF52DE]/30 focus:border-[#AF52DE]"></textarea>
                         </div>
                     </div>
 
@@ -329,9 +332,10 @@
         </div>
     </div>
 
-    <!-- Memuat kamus kata-kata AI -->
+    <!-- 1. KAMUS AI DI PANGGIL DI SINI DULU -->
     <script src="ai-dictionary.js"></script>
 
+    <!-- 2. OTAK UTAMA APLIKASI -->
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzG45zRlgoj3MIkjahYQoY3Rkg3LDbEev81mcDUczDXHEQ6jwgF9bnl4FPxdJxwvIC5sQ/exec";
         
@@ -594,6 +598,43 @@
         }
 
         // ==========================================
+        // DETEKSI MULTI-REVIEWER DARI OCR (BARU)
+        // ==========================================
+        function parseReviewerNamesFromOcr(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            let reviewers = [];
+            
+            // Pola mencari baris yang mengandung indikator waktu/bintang review
+            const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
+            // Pola kata kunci profil yang harus diabaikan/dilewati
+            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya)/i;
+
+            for (let i = 0; i < lines.length; i++) {
+                if (timePattern.test(lines[i])) {
+                    // Jika ketemu baris bintang/waktu, mendaki ke atas mencari nama asli
+                    for (let j = i - 1; j >= 0; j--) {
+                        let potentialName = lines[j];
+                        // Jika baris bukan kata kunci profil dan panjangnya masuk akal
+                        if (!skipPattern.test(potentialName) && potentialName.length > 2) {
+                            
+                            // 1. Bersihkan sisa karakter non-alfanumerik di ujung kiri dan kanan
+                            let cleanName = potentialName.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
+                            // 2. Potong huruf-huruf tunggal nyasar di awal kata (contoh: "0 Bima Kawindra" -> "Bima Kawindra")
+                            cleanName = cleanName.replace(/^[a-zA-Z0-9]\s+/i, '');
+                            
+                            if (cleanName.length > 2 && !reviewers.includes(cleanName)) {
+                                reviewers.push(cleanName);
+                            }
+                            break; // Stop mendaki jika sudah ketemu nama untuk review ini
+                        }
+                    }
+                }
+            }
+            
+            return reviewers;
+        }
+
+        // ==========================================
         // DATABASE LOKAL & FETCH
         // ==========================================
         async function fetchData() {
@@ -660,11 +701,10 @@
                     
                     if (filteredData.branches[b]) {
                         if (!filteredData.branches[b].users[name]) {
-                            filteredData.branches[b].users[name] = { score: 0, claims: 0, accounts: [] };
+                            filteredData.branches[b].users[name] = { score: 0, accounts: [] };
                         }
                         
                         filteredData.branches[b].users[name].score += row.score;
-                        filteredData.branches[b].users[name].claims += row.claims;
                         if (row.account) filteredData.branches[b].users[name].accounts.push(row.account);
                         
                         filteredData.branches[b].total += row.score;
@@ -681,15 +721,9 @@
                 
                 for (let uName in usersObj) {
                     if (usersObj[uName].score > 0) { 
-                        let totalScore = usersObj[uName].score;
-                        let claimed = usersObj[uName].claims;
-                        let available = Math.floor(totalScore / 5) - claimed;
-                        
                         userArr.push({
                             name: uName,
-                            score: totalScore,
-                            claimedCount: claimed,
-                            availableClaims: available > 0 ? available : 0,
+                            score: usersObj[uName].score,
                             accountsStr: usersObj[uName].accounts.join("||")
                         });
                     }
@@ -703,7 +737,6 @@
             renderMasterChart();
         }
 
-        // FUNGSI SIMULASI DUMMY DATA UNTUK TEST ANIMASI
         function runSimulation() {
             filteredData.master = [
                 { branch: "Purwakarta", totalScore: 166 },
@@ -714,10 +747,9 @@
                 { branch: "Cianjur", totalScore: 61 }
             ];
 
-            // Setup mock data agar tab Divisi tidak error
             const mockUsers = [
-                {name: "Dummy Pro", score: 50, claimedCount: 5, availableClaims: 5, accountsStr: ""},
-                {name: "Dummy Noob", score: 10, claimedCount: 0, availableClaims: 2, accountsStr: ""}
+                {name: "Dummy Pro", score: 50, accountsStr: ""},
+                {name: "Dummy Noob", score: 10, accountsStr: ""}
             ];
             
             const branchesList = ["Online", "CG", "Graha", "Galuh", "Purwakarta", "Cianjur"];
@@ -749,12 +781,12 @@
 
             const maxScore = masterData[0].totalScore;
             const gradients = {
-                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", // Gold
-                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     // Blue
-                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   // Green
-                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   // Purple
-                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",// Pink
-                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    // Orange
+                "Online": "linear-gradient(180deg, #FFD60A 0%, #FF9F0A 100%)", 
+                "CG": "linear-gradient(180deg, #0A84FF 0%, #0040DD 100%)",     
+                "Graha": "linear-gradient(180deg, #30D158 0%, #248A3D 100%)",   
+                "Galuh": "linear-gradient(180deg, #BF5AF2 0%, #5E2A84 100%)",   
+                "Purwakarta": "linear-gradient(180deg, #FF375F 0%, #990022 100%)",
+                "Cianjur": "linear-gradient(180deg, #FF9F0A 0%, #B25000 100%)"    
             };
 
             masterData.forEach((item, index) => {
@@ -786,7 +818,7 @@
         function animateBars() {
             const bars = document.querySelectorAll('.v-bar-fill');
             bars.forEach(bar => { 
-                bar.offsetHeight; // Force reflow
+                bar.offsetHeight; 
                 bar.style.height = bar.getAttribute('data-height'); 
                 bar.classList.add('animated'); 
             });
@@ -852,49 +884,6 @@
         }
 
         // ==========================================
-        // DETEKSI DAN PEMBACAAN OCR REVIEWS
-        // ==========================================
-        function parseReviewerNameFromOcr(text) {
-            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            let reviewer = "Google Reviewer 🤖";
-            
-            // Pola Maps seperti "menit lalu", "jam lalu", "ago", "★" dsb
-            const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
-            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps)/i;
-            
-            for (let i = 0; i < lines.length; i++) {
-                if (timePattern.test(lines[i])) {
-                    // Berjalan MUNDUR dari baris waktu untuk mencari nama
-                    for (let j = i - 1; j >= 0; j--) {
-                        let potentialName = lines[j];
-                        // Jika baris BUKAN berisi gelar/sampah dan panjangnya logis, maka itu Namanya!
-                        if (!skipPattern.test(potentialName) && potentialName.length > 2) {
-                            reviewer = potentialName;
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-            
-            // Fallback: Jika tidak ketemu pola waktu, cari baris pertama yang logis
-            if (reviewer === "Google Reviewer 🤖" && lines.length > 0) {
-                for (let line of lines) {
-                    if (!skipPattern.test(line) && line.length > 2) {
-                        reviewer = line;
-                        break;
-                    }
-                }
-            }
-            
-            // BERSHKAN SISA KARAKTER OCR
-            reviewer = reviewer.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim();
-            reviewer = reviewer.replace(/^[a-zA-Z]\s+/i, ''); 
-            
-            return reviewer.trim();
-        }
-
-        // ==========================================
         // LOGIKA SUBMIT DAN CHAT AI
         // ==========================================
         document.getElementById('reviewForm').addEventListener('submit', async function (e) {
@@ -938,19 +927,42 @@
                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim...';
                 btn.disabled = true;
 
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'add', branch: branchInput, name: nameInput, link: linkInput, accountName: accountInput })
+                    });
+
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#007AFF', '#34C759', '#FFD60A'] });
+                    showMessage('Poin berhasil ditambahkan!', 'success');
+                    document.getElementById('reviewForm').reset();
+                    document.getElementById('branchFilter').value = branchInput;
+                    setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
+
+                } catch (error) {
+                    showMessage('Menyinkronkan data...', 'success');
+                    setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
+                } finally {
+                    btn.innerHTML = 'Kirim & Sumbang Poin';
+                    btn.disabled = false;
+                }
+
             } else {
-                // KONDISI AI MODE
+                // ==========================================
+                // KONDISI AI MODE MULTI-REVIEW
+                // ==========================================
                 pesanAI = document.getElementById('inputPesanAI').value.trim();
                 
-                // Parse Nama dan Cabang dari pesan chat secara dinamis
+                // Parse Nama dan Cabang
                 const parsedResult = parseAiMessage(pesanAI);
                 
                 if (!parsedResult || !parsedResult.branch || !parsedResult.name) {
-                    showMessage("AI bingung! Pastikan kamu menuliskan Nama dan Cabang di pesan (Cth: 'Aku Nayla dari CG...').", "error");
+                    showMessage("AI bingung! Pastikan kamu menuliskan Nama dan Cabang di pesan (Cth: 'Aku Nayla dari CG setor 2 review').", "error");
                     return;
                 }
 
-                // Cek ketersediaan file gambar
                 const fileInput = document.getElementById('inputImage');
                 if (fileInput.files.length === 0) {
                     showMessage("Mohon sertakan screenshot bukti review Maps terlebih dahulu! 📸", "error");
@@ -959,9 +971,8 @@
 
                 branchInput = parsedResult.branch;
                 nameInput = parsedResult.name;
-                linkInput = "Diinput via AI 🤖";
 
-                // Sembunyikan Form, Tampilkan UI Chat
+                // Transisi UI Chat
                 document.getElementById('form-wrapper').classList.add('hidden');
                 document.getElementById('form-title').classList.add('hidden');
                 document.getElementById('form-subtitle').classList.add('hidden');
@@ -970,125 +981,111 @@
                 chatUI.classList.remove('hidden');
                 chatUI.classList.add('flex');
                 
-                // Isi pesan user
                 document.getElementById('chat-user-text').innerText = pesanAI;
 
-                // EKSEKUSI PEMINDAIAN OCR (TESSERACT.JS)
+                // EKSEKUSI OCR
                 const imageFile = fileInput.files[0];
                 const ocrBubble = document.querySelector('#ai-typing .chat-bubble');
-                
-                ocrBubble.innerHTML = `<span></span><span></span><span></span> AI sedang memindai nama reviewer dari gambar...`;
+                ocrBubble.innerHTML = `<span></span><span></span><span></span> AI sedang memindai reviewer dari gambar...`;
 
                 try {
-                    const ocrResult = await Tesseract.recognize(
-                        imageFile,
-                        'eng',
-                        { logger: m => {
+                    const ocrResult = await Tesseract.recognize(imageFile, 'eng', { 
+                        logger: m => {
                             if (m.status === 'recognizing text') {
                                 ocrBubble.innerHTML = `<span></span><span></span><span></span> Menganalisis screenshot (${Math.round(m.progress * 100)}%)...`;
                             }
-                          }
                         }
-                    );
+                    });
                     
-                    // Deteksi nama reviewer sesungguhnya dari OCR
-                    accountInput = parseReviewerNameFromOcr(ocrResult.data.text);
+                    // Ekstrak SEMUA nama reviewer yang ada di gambar (mengembalikan Array)
+                    let extractedNames = parseReviewerNamesFromOcr(ocrResult.data.text);
+                    
+                    if (extractedNames.length === 0) {
+                        extractedNames = ["Reviewer via AI 🤖"]; // Fallback jika OCR nge-blank
+                    }
 
-                    // ==========================================
-                    // PERBAIKAN: VALIDASI ANTI DUPLIKAT VIA AI LEBIH KETAT
-                    // ==========================================
-                    let isDuplicate = false;
-                    let submittedBy = "";
+                    // VALIDASI PARTIAL: Pisahkan mana yang valid, mana yang duplikat
+                    let validNames = [];
+                    let duplicateNames = [];
                     const branchUsers = filteredData.branches[branchInput]?.userList || [];
-                    
-                    // Fungsi pembersih string agar "Q Slice of Romance" = "slice of romance"
                     const cleanString = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const cleanAccountInput = cleanString(accountInput);
 
-                    for (let p of branchUsers) {
-                        if (p.accountsStr) {
-                            let userAccounts = p.accountsStr.split("||");
-                            for (let existingAccount of userAccounts) {
-                                // Cek menggunakan string yang sudah dibersihkan sepenuhnya
-                                if (cleanString(existingAccount) === cleanAccountInput || cleanString(existingAccount).includes(cleanAccountInput) || cleanAccountInput.includes(cleanString(existingAccount))) {
-                                    isDuplicate = true;
-                                    submittedBy = p.name;
-                                    break;
+                    for (let accInput of extractedNames) {
+                        let isDuplicate = false;
+                        let submittedBy = "";
+                        const cleanAccountInput = cleanString(accInput);
+
+                        for (let p of branchUsers) {
+                            if (p.accountsStr) {
+                                let userAccounts = p.accountsStr.split("||");
+                                for (let existingAccount of userAccounts) {
+                                    if (cleanString(existingAccount) === cleanAccountInput || cleanString(existingAccount).includes(cleanAccountInput) || cleanAccountInput.includes(cleanString(existingAccount))) {
+                                        isDuplicate = true;
+                                        submittedBy = p.name;
+                                        break;
+                                    }
                                 }
                             }
+                            if(isDuplicate) break;
                         }
-                        if(isDuplicate) break;
+
+                        if (isDuplicate) {
+                            duplicateNames.push({ name: accInput, by: submittedBy });
+                        } else {
+                            validNames.push(accInput);
+                        }
                     }
 
-                    if (isDuplicate) {
-                        // Jika duplikat, kembalikan ke form awal dan beri peringatan
-                        resetFormAI();
-                        showMessage(`Ulasan dari akun "${accountInput}" sudah diklaim oleh ${submittedBy}! ❌`, 'error');
-                        return; // Hentikan proses ke database
+                    // POST KE DATABASE (Hanya yang Valid)
+                    if (validNames.length > 0) {
+                        for (let vName of validNames) {
+                            await fetch(API_URL, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'add', branch: branchInput, name: nameInput, link: "Diinput via AI 🤖", accountName: vName })
+                            });
+                        }
                     }
 
-                } catch (ocrErr) {
-                    console.error("OCR Gagal:", ocrErr);
-                    accountInput = "Reviewer Terdeteksi via AI 🤖"; // Fallback name
-                }
-            }
-
-            try {
-                // Tembak Data ke Google Sheets
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'add', branch: branchInput, name: nameInput, link: linkInput, accountName: accountInput })
-                });
-
-                if (inputMode === 'manual') {
-                    // Manual Selesai
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#007AFF', '#34C759', '#FFD60A'] });
-                    showMessage('Poin berhasil ditambahkan!', 'success');
-                    document.getElementById('reviewForm').reset();
-                    document.getElementById('branchFilter').value = branchInput;
-                    setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
-                } else {
-                    // AI Selesai - Kalkulasi Poin Baru untuk Pesan AI
-                    const branchUsers = filteredData.branches[branchInput]?.userList || [];
+                    // HITUNG POIN BARU
                     let currentUser = branchUsers.find(u => u.name.toLowerCase() === nameInput.toLowerCase());
-                    let newTotal = currentUser ? currentUser.score + 1 : 1;
-                    
-                    // Ambil sisa claim
-                    let currentClaims = currentUser ? currentUser.claimedCount : 0;
-                    let availableClaims = Math.floor(newTotal / 5) - currentClaims;
-                    let finalAvailable = availableClaims > 0 ? availableClaims : 0;
+                    let currentTotal = currentUser ? currentUser.score : 0;
+                    let newTotal = currentTotal + validNames.length;
 
-                    // Panggil dari kamus (4 Parameter)
-                    let finalMsg = "Balasan AI Error";
+                    // GENERATE BALASAN AI (Lewat Kamus Eksternal)
+                    let finalMsg = "AI Error membaca kamus.";
                     if (typeof generateAIResponse === "function") {
-                        finalMsg = generateAIResponse(nameInput, newTotal, finalAvailable, `<strong>${accountInput}</strong>`);
+                        finalMsg = generateAIResponse(nameInput, newTotal, validNames, duplicateNames);
                     } else {
-                        finalMsg = `Wah cakep banget ${nameInput}! Ulasan dari <strong>${accountInput}</strong> terdeteksi bintang 5 sempurna. Sekarang total review kamu ada ${newTotal} lho! 🎉`;
+                        // Fallback darurat jika ai-dictionary.js gagal dimuat
+                        if (validNames.length > 0 && duplicateNames.length === 0) {
+                            finalMsg = `Cakep ${nameInput}! ${validNames.length} review valid. Poin kamu: ${newTotal}.`;
+                        } else if (validNames.length === 0) {
+                            finalMsg = `Waduh, semua review udah diklaim orang lain. Poin tetep ${newTotal}.`;
+                        } else {
+                            finalMsg = `Sistem nerima ${validNames.length} review, sisanya duplikat. Total poin: ${newTotal}.`;
+                        }
                     }
 
-                    // Tampilkan Balasan Chat AI
+                    // Tampilkan Hasil Chat
                     setTimeout(() => {
                         document.getElementById('ai-typing').classList.add('hidden');
                         document.getElementById('ai-response').classList.remove('hidden');
                         document.getElementById('chat-ai-text').innerHTML = finalMsg;
                         document.getElementById('btn-setor-lagi').classList.remove('hidden');
                         
-                        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#AF52DE', '#FFD60A'] });
+                        if (validNames.length > 0) {
+                            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#AF52DE', '#FFD60A'] });
+                        }
                         
-                        // Update background data diam-diam
-                        fetchData(); 
+                        fetchData(); // Silently update background data
                     }, 1000);
-                }
 
-            } catch (error) {
-                showMessage('Menyinkronkan data...', 'success');
-                setTimeout(() => { switchTab('divisi'); fetchData(); }, 2000);
-            } finally {
-                if(inputMode === 'manual') {
-                    btn.innerHTML = 'Kirim & Sumbang Poin';
-                    btn.disabled = false;
+                } catch (err) {
+                    console.error("AI Error:", err);
+                    resetFormAI();
+                    showMessage("Terjadi kesalahan saat memproses gambar oleh AI.", "error");
                 }
             }
         });
@@ -1163,10 +1160,6 @@
             }
         }
 
-        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') verifyAdmin();
-        });
-
         let pendingAdminAction = null;
 
         function sendAdminAction(userName, actionType, branchName) {
@@ -1183,10 +1176,6 @@
                 confirmMsg = `Kurangi 1 poin dari <strong>${userName}</strong>?`;
                 iconHtml = '<i class="fa-solid fa-minus"></i>'; iconColor = 'text-[#FF9F0A]';
                 btnClass = 'flex-1 bg-[#FF9F0A] hover:bg-[#D08200] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
-            } else if (actionType === 'claim') {
-                confirmMsg = `Catat pemberian 1 reward untuk <strong>${userName}</strong>?`;
-                iconHtml = '<i class="fa-solid fa-gift"></i>'; iconColor = 'text-[#34C759]';
-                btnClass = 'flex-1 bg-[#34C759] hover:bg-[#248A3D] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
             }
 
             document.getElementById('confirmIcon').innerHTML = iconHtml;
