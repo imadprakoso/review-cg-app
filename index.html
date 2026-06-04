@@ -606,15 +606,16 @@
             
             // Pola mencari baris yang mengandung indikator waktu/bintang review
             const timePattern = /(menit|jam|hari|minggu|bulan|tahun|ago|month|week|day|hour|minute|baru|\d+\s*★|★|star|rating)/i;
-            // Pola kata kunci profil yang harus diabaikan/dilewati
-            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya)/i;
+            
+            // PERBAIKAN: Pola kata kunci profil ATAU tombol UI Maps yang harus diabaikan/dilewati
+            const skipPattern = /(local guide|ulasan|foto|review|google|share|maps|lainnya|suka|bagikan|like)/i;
 
             for (let i = 0; i < lines.length; i++) {
                 if (timePattern.test(lines[i])) {
                     // Jika ketemu baris bintang/waktu, mendaki ke atas mencari nama asli
                     for (let j = i - 1; j >= 0; j--) {
                         let potentialName = lines[j];
-                        // Jika baris bukan kata kunci profil dan panjangnya masuk akal
+                        // Jika baris BUKAN kata kunci profil/tombol UI dan panjangnya masuk akal
                         if (!skipPattern.test(potentialName) && potentialName.length > 2) {
                             
                             // 1. Bersihkan sisa karakter non-alfanumerik di ujung kiri dan kanan
