@@ -1178,6 +1178,10 @@
                 confirmMsg = `Kurangi 1 poin dari <strong>${userName}</strong>?`;
                 iconHtml = '<i class="fa-solid fa-minus"></i>'; iconColor = 'text-[#FF9F0A]';
                 btnClass = 'flex-1 bg-[#FF9F0A] hover:bg-[#D08200] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
+            } else if (actionType === 'claim') {
+                confirmMsg = `Catat pemberian 1 reward untuk <strong>${userName}</strong>?`;
+                iconHtml = '<i class="fa-solid fa-gift"></i>'; iconColor = 'text-[#34C759]';
+                btnClass = 'flex-1 bg-[#34C759] hover:bg-[#248A3D] text-white py-3 rounded-xl font-semibold transition-colors text-[15px]';
             }
 
             document.getElementById('confirmIcon').innerHTML = iconHtml;
