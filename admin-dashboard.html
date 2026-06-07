@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #000000; color: #F2F2F2; min-height: 100vh; }
         .ios-card { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; position: relative; }
@@ -47,7 +49,7 @@
     <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="text-[#0A84FF] text-6xl mb-6"><i class="fa-solid fa-chart-pie"></i></div>
         <h2 class="text-2xl font-bold mb-2">Analisa Rating</h2>
-        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia.</p>
+        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia</p>
         <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
         <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Analitik</button>
     </div>
@@ -283,14 +285,14 @@
             const saveBtn = document.getElementById('saveBtn');
 
             if (isAutoInputMode) {
-                label.innerText = "AUTO BINTANG 5";
+                label.innerText = "Auto";
                 label.classList.replace('text-[#8E8E93]', 'text-[#34C759]');
                 // Kunci input jika mode Auto
                 inputGroup.classList.add('blur-overlay');
                 saveBtn.disabled = true;
                 saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
-                label.innerText = "MANUAL INPUT";
+                label.innerText = "Manual";
                 label.classList.replace('text-[#34C759]', 'text-[#8E8E93]');
                 // Buka kunci input
                 inputGroup.classList.remove('blur-overlay');
@@ -482,8 +484,13 @@
             const neededSuffix = document.getElementById('neededSuffix');
             let needed = 0;
 
+            // LOGIKANYA DIPERKETAT UNTUK TARGET 5.0
             if (target === 5.0 && currentRating < 5.0 && n > 0) {
-                needed = "Mustahil";
+                // Secara matematis murni nggak bisa 5.0 jika sudah ada nilai < 5
+                // Tapi Google kadang membulatkan 4.95 jadi 5.0. Kita pakai target 4.95
+                const proxyTarget = 4.95;
+                needed = Math.ceil((proxyTarget * n - s) / (5 - proxyTarget));
+                if (needed < 0) needed = 0;
             } else if (currentRating >= target) {
                 needed = "Tercapai";
             } else {
@@ -493,63 +500,21 @@
 
             if (typeof needed === 'number') {
                 document.getElementById('neededReviews').innerText = needed.toLocaleString('id-ID');
-                document.getElementById('neededSuffix').classList.remove('hidden');
+                neededSuffix.classList.remove('hidden');
+                document.getElementById('neededReviews').style.fontSize = "1.875rem";
             } else {
                 document.getElementById('neededReviews').innerText = needed;
-                if (needed === "Mustahil") document.getElementById('neededReviews').style.fontSize = "1.5rem";
-                else document.getElementById('neededReviews').style.fontSize = "1.875rem";
-                
-                document.getElementById('neededSuffix').classList.add('hidden');
+                document.getElementById('neededReviews').style.fontSize = "1.875rem";
+                neededSuffix.classList.add('hidden');
             }
             
-            // Re-render tabel hanya buat view kalau lagi iseng ngitung manual di UI
-            let bData = dbData.find(d => d.branch === activeBranch);
-            if(bData) {
-                bData.star1 = s1; bData.star2 = s2; bData.star3 = s3; bData.star4 = s4; bData.star5 = s5;
-                processAndRender();
-            }
-            
-        }
-
-        async function saveData() {
-            if (!activeBranch || isAutoInputMode) return; // Proteksi kalau mode auto gak bisa save manual
-            
-            const btn = document.getElementById('saveBtn');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...';
-            btn.disabled = true;
-            
-            const payload = {
-                action: 'updateAnalytics',
-                periode: document.getElementById('periodFilter').value, 
-                branch: activeBranch,
-                star1: parseInt(document.getElementById('s1').value) || 0,
-                star2: parseInt(document.getElementById('s2').value) || 0,
-                star3: parseInt(document.getElementById('s3').value) || 0,
-                star4: parseInt(document.getElementById('s4').value) || 0,
-                star5: parseInt(document.getElementById('s5').value) || 0
-            };
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                showToast(`Data Presisi ${activeBranch} (${payload.periode}) berhasil disimpan!`, "success");
-                
-                let bData = dbData.find(d => d.branch === activeBranch);
-                bData.star1 = payload.star1; bData.star2 = payload.star2;
-                bData.star3 = payload.star3; bData.star4 = payload.star4; bData.star5 = payload.star5;
-                processAndRender();
-                
-            } catch (err) {
-                showToast("Gagal menyimpan ke server.", "error");
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
+            // Re-render tabel kalau mode Manual (simulasi on-the-fly)
+            if(!isAutoSync) {
+               let bData = dbData.find(d => d.branch === activeBranch);
+               if(bData) {
+                   bData.star1 = s1; bData.star2 = s2; bData.star3 = s3; bData.star4 = s4; bData.star5 = s5;
+                   processAndRender();
+               }
             }
         }
     </script>
