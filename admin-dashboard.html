@@ -34,6 +34,9 @@
         input:checked + .slider { background-color: #34C759; }
         input:focus + .slider { box-shadow: 0 0 1px #34C759; }
         input:checked + .slider:before { transform: translateX(20px); }
+        
+        /* Blur Overlay */
+        .blur-overlay { filter: blur(4px); pointer-events: none; opacity: 0.6; transition: all 0.3s ease; }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
@@ -44,13 +47,13 @@
     <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="text-[#0A84FF] text-6xl mb-6"><i class="fa-solid fa-chart-pie"></i></div>
         <h2 class="text-2xl font-bold mb-2">Analisa Rating</h2>
-        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia</p>
+        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia.</p>
         <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
         <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Analitik</button>
     </div>
 
     <div id="appWrapper" class="w-full max-w-7xl hidden flex-col gap-6">
-        <!-- HEADER WITH TIMELINE FILTER -->
+        <!-- HEADER WITH TIMELINE FILTER & TOGGLE -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -59,7 +62,17 @@
                 <p class="text-[#8E8E93] text-sm mt-1" id="lastUpdated">Last updated: -</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-4">
+                
+                <!-- Toggle Mode Input Auto (Bintang 5) / Manual -->
+                <div class="flex items-center gap-3 bg-[#1C1C1E] border border-white/10 px-4 py-2 rounded-lg shadow-sm" title="ON: Input web utama dihitung sbg bintang 5. OFF: Admin sesuaikan angka manual.">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-white" id="toggleLabel">AUTO INPUT BINTANG 5</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="syncModeToggle" onchange="toggleSyncMode()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
                 <!-- Dropdown Waktu (Flashback) -->
                 <div class="relative bg-[#1C1C1E] border border-white/10 rounded-lg flex items-center px-3 py-1.5 shadow-sm">
                     <i class="fa-regular fa-calendar text-[#8E8E93] mr-2 text-sm"></i>
@@ -99,22 +112,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- TABEL CABANG -->
             <div class="lg:col-span-2 ios-card overflow-hidden">
-                <div class="p-6 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5">
+                <div class="p-6 pb-2 flex justify-between items-center border-b border-white/5">
                     <h3 class="text-lg font-semibold text-white">Performa Cabang <span class="text-[#007AFF] text-sm ml-2" id="tablePeriodLabel"></span></h3>
-                    
-                    <div class="flex items-center gap-4 bg-[#2C2C2E]/50 px-4 py-2 rounded-xl border border-white/5">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-[#8E8E93] font-medium">Auto Sync</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="syncModeToggle" onchange="toggleSyncMode()">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="w-px h-4 bg-white/10"></div>
-                        <button onclick="fetchData()" id="btnSyncServer" class="text-[#007AFF] hover:text-[#005bb5] text-sm font-semibold transition-colors flex items-center gap-2">
-                            <i class="fa-solid fa-rotate-right" id="syncIcon"></i> <span id="syncText">Sync</span>
-                        </button>
-                    </div>
+                    <!-- Indikator Loading -->
+                    <span id="syncIcon" class="text-sm text-[#007AFF] hidden"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat data...</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
@@ -151,7 +152,7 @@
                     <option value="" disabled selected>Pilih Cabang...</option>
                 </select>
                 
-                <div class="space-y-3 mb-6">
+                <div id="inputGroup" class="space-y-3 mb-6 transition-all duration-300">
                     <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
                         <span class="text-sm font-medium text-white flex items-center w-24"><i class="fa-solid fa-star text-[#FFD60A] text-xs mr-2"></i> 5 Bintang</span>
                         <input type="number" id="s5" class="ios-input w-20 py-1 text-white font-bold rounded" value="0" oninput="calculate()">
@@ -175,7 +176,7 @@
                 </div>
 
                 <button onclick="saveData()" id="saveBtn" class="w-full bg-[#007AFF] hover:bg-[#005bb5] text-white py-3 rounded-xl text-sm font-semibold transition-colors mb-6 shadow-lg shadow-[#007AFF]/20 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Data Cabang
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Presisi Cabang
                 </button>
 
                 <div class="pt-5 border-t border-white/10 mt-auto">
@@ -212,8 +213,8 @@
         let defaultBranches = ["Online", "CG Tuparev", "Graha", "Galuh", "Purwakarta", "Cianjur"];
         let activeBranch = null;
         
-        // Cek LocalStorage untuk status Toggle Sync, default is true
-        let isAutoSync = localStorage.getItem('adminAutoSync') !== 'false';
+        // Mode Auto: true (otomatis tambah bintang 5 via Web), false (Admin set manual)
+        let isAutoInputMode = localStorage.getItem('adminAutoInputMode') !== 'false';
 
         // Setup Opsi Dropdown Periode Berdasarkan Waktu Saat Ini
         function setupPeriodDropdown() {
@@ -224,22 +225,19 @@
 
             const periodFilter = document.getElementById('periodFilter');
             
-            // Tambahkan bulan berjalan (Otomatis menyesuaikan bulan asli HP)
             periodFilter.innerHTML = `
                 <option value="${currentPeriodStr}">Bulan Ini (${currentPeriodStr})</option>
                 <option value="05-2026">Mei 2026</option>
                 <option value="04-2026">April 2026</option>
             `;
             
-            // Set label UI
             document.getElementById('w-period-label').innerText = `(${currentPeriodStr})`;
             document.getElementById('tablePeriodLabel').innerText = `(${currentPeriodStr})`;
         }
 
-        // Setel posisi toggle di awal
-        document.getElementById('syncModeToggle').checked = isAutoSync;
-        updateSyncButtonUI();
-        setupPeriodDropdown(); // Panggil fungsi saat web dimuat
+        document.getElementById('syncModeToggle').checked = isAutoInputMode;
+        updateUIBasedOnMode();
+        setupPeriodDropdown(); 
 
         function checkPin() {
             if (document.getElementById('pinInput').value === "1155") {
@@ -249,7 +247,7 @@
                     document.getElementById('appWrapper').classList.remove('hidden');
                     document.getElementById('appWrapper').classList.add('flex');
                     
-                    fetchData();
+                    fetchData(); // Selalu fetch saat login berhasil
                 }, 400);
             } else {
                 showToast("PIN Salah!", "error");
@@ -267,25 +265,37 @@
         }
 
         function toggleSyncMode() {
-            isAutoSync = document.getElementById('syncModeToggle').checked;
-            localStorage.setItem('adminAutoSync', isAutoSync); // Simpan ke local storage
+            isAutoInputMode = document.getElementById('syncModeToggle').checked;
+            localStorage.setItem('adminAutoInputMode', isAutoInputMode); 
             
-            updateSyncButtonUI();
+            updateUIBasedOnMode();
             
-            if (isAutoSync) {
-                showToast("Auto Sync Aktif: Data ditarik dari Server", "success");
-                fetchData();
+            if (isAutoInputMode) {
+                showToast("Mode Auto ON: Review dari Web = Bintang 5", "success");
             } else {
-                showToast("Manual Mode: Data Server diabaikan", "error");
+                showToast("Mode Manual ON: Admin input breakdown bintang", "success");
             }
         }
 
-        function updateSyncButtonUI() {
-            const btnSync = document.getElementById('btnSyncServer');
-            if (isAutoSync) {
-                btnSync.classList.remove('opacity-50', 'cursor-not-allowed');
+        function updateUIBasedOnMode() {
+            const label = document.getElementById('toggleLabel');
+            const inputGroup = document.getElementById('inputGroup');
+            const saveBtn = document.getElementById('saveBtn');
+
+            if (isAutoInputMode) {
+                label.innerText = "AUTO BINTANG 5";
+                label.classList.replace('text-[#8E8E93]', 'text-[#34C759]');
+                // Kunci input jika mode Auto
+                inputGroup.classList.add('blur-overlay');
+                saveBtn.disabled = true;
+                saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
-                btnSync.classList.add('opacity-50', 'cursor-not-allowed');
+                label.innerText = "MANUAL INPUT";
+                label.classList.replace('text-[#34C759]', 'text-[#8E8E93]');
+                // Buka kunci input
+                inputGroup.classList.remove('blur-overlay');
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
 
@@ -293,11 +303,9 @@
             const val = document.getElementById('periodFilter').value;
             showToast(`Menampilkan histori: ${val}`, "success");
             
-            // Update Label
             document.getElementById('w-period-label').innerText = `(${val})`;
             document.getElementById('tablePeriodLabel').innerText = `(${val})`;
 
-            // Reset selection supaya nggak error pas ganti bulan
             activeBranch = null;
             document.getElementById('branchSelect').value = "";
             const overlay = document.getElementById('simOverlay');
@@ -310,18 +318,14 @@
         }
 
         async function fetchData() {
-            if (!isAutoSync) return; 
-
             const syncIcon = document.getElementById('syncIcon');
-            syncIcon.classList.add('fa-spin');
+            syncIcon.classList.remove('hidden');
             
-            // Ambil bulan yang dipilih untuk dikirim ke API
             const selectedPeriode = document.getElementById('periodFilter').value;
 
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menarik data untuk periode ${selectedPeriode}...</td></tr>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menarik data periode ${selectedPeriode}...</td></tr>`;
             
             try {
-                // Mengirim parameter &periode=... ke Apps Script
                 const response = await fetch(`${API_URL}?action=getAnalytics&periode=${selectedPeriode}&nocache=${new Date().getTime()}`);
                 const res = await response.json();
                 
@@ -331,7 +335,6 @@
                     dbData = [];
                 }
                 
-                // Isi cabang default menjadi 0 jika di bulan itu belum ada data di server
                 defaultBranches.forEach(b => {
                     if (!dbData.find(d => d.branch === b || d.branch === `${b} Tuparev`)) {
                         dbData.push({ branch: b, star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 });
@@ -347,7 +350,7 @@
                 showToast("Koneksi gagal. Pastikan URL API sudah benar.", "error");
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Terjadi kesalahan koneksi jaringan.</td></tr>';
             } finally {
-                syncIcon.classList.remove('fa-spin');
+                syncIcon.classList.add('hidden');
             }
         }
 
@@ -499,17 +502,18 @@
                 document.getElementById('neededSuffix').classList.add('hidden');
             }
             
-            if(!isAutoSync) {
-               let bData = dbData.find(d => d.branch === activeBranch);
-               if(bData) {
-                   bData.star1 = s1; bData.star2 = s2; bData.star3 = s3; bData.star4 = s4; bData.star5 = s5;
-                   processAndRender();
-               }
+            // Re-render tabel hanya buat view kalau lagi iseng ngitung manual di UI
+            let bData = dbData.find(d => d.branch === activeBranch);
+            if(bData) {
+                bData.star1 = s1; bData.star2 = s2; bData.star3 = s3; bData.star4 = s4; bData.star5 = s5;
+                processAndRender();
             }
+            
         }
 
         async function saveData() {
-            if (!activeBranch) return;
+            if (!activeBranch || isAutoInputMode) return; // Proteksi kalau mode auto gak bisa save manual
+            
             const btn = document.getElementById('saveBtn');
             const originalContent = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...';
@@ -517,7 +521,7 @@
             
             const payload = {
                 action: 'updateAnalytics',
-                periode: document.getElementById('periodFilter').value, // Kirim periode dari dropdown!
+                periode: document.getElementById('periodFilter').value, 
                 branch: activeBranch,
                 star1: parseInt(document.getElementById('s1').value) || 0,
                 star2: parseInt(document.getElementById('s2').value) || 0,
@@ -527,17 +531,14 @@
             };
 
             try {
-                if (isAutoSync) {
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    showToast(`Data ${activeBranch} (${payload.periode}) berhasil disimpan!`, "success");
-                } else {
-                    showToast(`Mode Manual: Data ${activeBranch} disimpan sementara secara lokal.`, "success");
-                }
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                showToast(`Data Presisi ${activeBranch} (${payload.periode}) berhasil disimpan!`, "success");
                 
                 let bData = dbData.find(d => d.branch === activeBranch);
                 bData.star1 = payload.star1; bData.star2 = payload.star2;
