@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #000000; color: #F2F2F2; min-height: 100vh; }
-        .ios-card { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; }
+        .ios-card { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; position: relative; }
         .ios-input { background-color: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s ease; outline: none; text-align: center; }
         .ios-input:focus { border-color: #007AFF; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
+        select.ios-input { text-align: left; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238E8E93' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
         table { border-collapse: separate; border-spacing: 0; width: 100%; }
         th { color: #8E8E93; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left;}
         td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; vertical-align: middle;}
@@ -34,7 +35,7 @@
     <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="text-[#0A84FF] text-6xl mb-6"><i class="fa-solid fa-chart-pie"></i></div>
         <h2 class="text-2xl font-bold mb-2">Analisa Rating</h2>
-        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia (1155 untuk demo).</p>
+        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia (1155).</p>
         <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
         <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Analitik</button>
     </div>
@@ -47,8 +48,8 @@
                 <p class="text-[#8E8E93] text-sm mt-1" id="lastUpdated">Last updated: -</p>
             </div>
             <div class="flex gap-3">
-                <button class="bg-[#2C2C2E] text-[#8E8E93] px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"><i class="fa-solid fa-users-gear mr-2"></i>Data Peserta</button>
-                <button class="bg-[#2C2C2E] text-[#8E8E93] px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"><i class="fa-solid fa-arrow-left mr-2"></i>Web Utama</button>
+                <a href="admin.html" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"><i class="fa-solid fa-users-gear mr-2"></i>Data Peserta</a>
+                <a href="index.html" class="bg-[#2C2C2E] hover:bg-[#3A3A3C] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"><i class="fa-solid fa-arrow-left mr-2"></i>Web Utama</a>
             </div>
         </div>
 
@@ -78,7 +79,7 @@
             <div class="lg:col-span-2 ios-card overflow-hidden">
                 <div class="p-6 pb-2 flex justify-between items-center border-b border-white/5">
                     <h3 class="text-lg font-semibold text-white">Performa Cabang</h3>
-                    <button onclick="fetchData()" class="text-[#007AFF] hover:text-white text-sm transition-colors"><i class="fa-solid fa-rotate-right"></i> Sync</button>
+                    <button onclick="fetchData()" class="text-[#007AFF] hover:text-white text-sm transition-colors"><i class="fa-solid fa-rotate-right"></i> Sync Server</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
@@ -99,9 +100,19 @@
             </div>
 
             <!-- SIMULATOR & INPUT -->
-            <div class="ios-card p-6 flex flex-col" id="simulatorPanel" style="opacity: 0.5; pointer-events: none; transition: opacity 0.3s;">
-                <h3 class="text-lg font-semibold text-white mb-1"><i class="fa-solid fa-calculator text-[#AF52DE] mr-2"></i>Kalkulator Target</h3>
-                <p class="text-[#8E8E93] text-[12px] mb-6" id="simTitle">Pilih cabang di tabel untuk memulai.</p>
+            <div class="ios-card p-6 flex flex-col relative" id="simulatorPanel">
+                
+                <!-- Overlay Kunci (Minta Pilih Cabang Dulu) -->
+                <div id="simOverlay" class="absolute inset-0 z-20 bg-[#1C1C1E]/90 backdrop-blur-sm flex flex-col items-center justify-center rounded-[24px] transition-opacity duration-300">
+                    <i class="fa-solid fa-hand-pointer text-4xl text-[#007AFF] mb-3"></i>
+                    <p class="text-[#8E8E93] font-medium text-sm">Pilih cabang untuk mulai simulasi</p>
+                </div>
+
+                <h3 class="text-lg font-semibold text-white mb-4"><i class="fa-solid fa-calculator text-[#AF52DE] mr-2"></i>Kalkulator Target Breakdown</h3>
+                
+                <select id="branchSelect" onchange="selectBranchFromDropdown()" class="ios-input w-full py-3 px-4 mb-6 text-white font-semibold text-sm rounded-xl cursor-pointer appearance-none border border-white/10">
+                    <option value="" disabled selected>Pilih Cabang...</option>
+                </select>
                 
                 <div class="space-y-3 mb-6">
                     <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
@@ -140,7 +151,7 @@
                     <div class="bg-gradient-to-r from-[#AF52DE]/10 to-[#5E2A84]/10 border border-[#AF52DE]/20 p-5 rounded-xl">
                         <p class="text-[11px] text-[#AF52DE] font-medium mb-1">Dibutuhkan tambahan Bintang 5 murni:</p>
                         <div class="text-3xl font-black text-white" id="neededReviews">0</div>
-                        <p class="text-[10px] text-[#8E8E93] mt-2">Agar target di atas dapat tercapai secara matematis.</p>
+                        <p class="text-[10px] text-[#8E8E93] mt-2">Dihitung otomatis saat ada perubahan rincian bintang.</p>
                     </div>
                 </div>
             </div>
@@ -148,8 +159,8 @@
     </div>
 
     <script>
-        // Ganti URL ini dengan URL Web App Apps Script lu jika sudah di deploy ulang
-        const API_URL = "https://script.google.com/macros/s/AKfycbydtGWuQdxy4JBavrD_MqtdE0xoc8dfNhQGyQWd40xs6DjavXj3zhlCPD9wkbT2OQHvww/exec";
+        // URL Apps Script Web App lu
+        const API_URL = "https://script.google.com/macros/s/AKfycbzYFEBvgdj5f9BTV9M_EBLlru7Fd7I77_lXcDWbRCuzHA-mq0wJDhMKdF_Z5pTeNDmsyA/exec";
         
         let dbData = [];
         let defaultBranches = ["Online", "CG Tuparev", "Graha", "Galuh", "Purwakarta", "Cianjur"];
@@ -163,9 +174,8 @@
                     document.getElementById('appWrapper').classList.remove('hidden');
                     document.getElementById('appWrapper').classList.add('flex');
                     
-                    // Isi data dummy jika API gagal (untuk demo di preview Canvas)
-                    populateDummyData();
-                    processAndRender();
+                    // LANGSUNG TARIK DATA RIIL DARI GOOGLE SHEETS
+                    fetchData();
                 }, 400);
             } else {
                 showToast("PIN Salah!", "error");
@@ -182,42 +192,43 @@
             setTimeout(() => { box.classList.remove('show'); }, 3000);
         }
 
-        // Dummy data jika preview Canvas belum bisa terhubung ke API Google Script
-        function populateDummyData() {
-            dbData = [
-                { branch: "CG Tuparev", star1: 50, star2: 14, star3: 38, star4: 65, star5: 861 },
-                { branch: "Purwakarta", star1: 19, star2: 4, star3: 7, star4: 20, star5: 473 },
-                { branch: "Graha", star1: 27, star2: 12, star3: 20, star4: 38, star5: 446 },
-                { branch: "Galuh", star1: 22, star2: 8, star3: 27, star4: 75, star5: 288 },
-                { branch: "Cianjur", star1: 3, star2: 0, star3: 3, star4: 4, star5: 161 },
-                { branch: "Online", star1: 0, star2: 0, star3: 0, star4: 0, star5: 128 }
-            ];
-            document.getElementById('lastUpdated').innerText = `Last updated: ${new Date().toLocaleString('id-ID')} (Data Demo)`;
-        }
-
         async function fetchData() {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menyinkronkan data...</td></tr>';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menyinkronkan data dengan server...</td></tr>';
             try {
                 const response = await fetch(`${API_URL}?action=getAnalytics&nocache=${new Date().getTime()}`);
                 const res = await response.json();
                 
                 if(res.data && res.data.length > 0) {
                     dbData = res.data;
+                } else {
+                    dbData = [];
                 }
                 
+                // Pastikan branch dasar ada walaupun datanya kosong
                 defaultBranches.forEach(b => {
-                    if (!dbData.find(d => d.branch === b)) {
+                    if (!dbData.find(d => d.branch === b || d.branch === `${b} Tuparev`)) {
                         dbData.push({ branch: b, star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 });
                     }
                 });
 
                 document.getElementById('lastUpdated').innerText = `Last updated: ${new Date().toLocaleString('id-ID')}`;
+                
+                updateDropdownOptions();
                 processAndRender();
             } catch (err) {
-                console.error("Gagal fetch, pakai data dummy", err);
-                populateDummyData();
-                processAndRender();
+                console.error("Gagal fetch API", err);
+                showToast("Koneksi gagal. Pastikan URL API sudah benar.", "error");
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Terjadi kesalahan koneksi jaringan.</td></tr>';
             }
+        }
+
+        function updateDropdownOptions() {
+            const select = document.getElementById('branchSelect');
+            // Reset isi
+            select.innerHTML = '<option value="" disabled selected>Pilih Cabang...</option>';
+            dbData.forEach((d) => {
+                select.insertAdjacentHTML('beforeend', `<option value="${d.branch}">${d.branch}</option>`);
+            });
         }
 
         function processAndRender() {
@@ -264,23 +275,50 @@
                 tbody.insertAdjacentHTML('beforeend', tr);
             });
 
+            // Re-highlight baris jika sebelumnya sudah ada yang diklik
+            if (activeBranch) {
+                const index = dbData.findIndex(d => d.branch === activeBranch);
+                if (index > -1) {
+                    document.getElementById(`row-${index}`).classList.add('active-row');
+                }
+            }
+
             document.getElementById('w-total-review').innerText = totalReviewGlobal.toLocaleString('id-ID');
             document.getElementById('w-rating').innerText = totalReviewGlobal > 0 ? (totalSkorGlobal / totalReviewGlobal).toFixed(2) : "0.0";
             document.getElementById('w-best').innerText = bestBranch.name;
             document.getElementById('w-worst').innerText = worstBranch.name;
         }
 
+        // Trigger dari Dropdown Kalkulator
+        function selectBranchFromDropdown() {
+            const selectVal = document.getElementById('branchSelect').value;
+            const index = dbData.findIndex(d => d.branch === selectVal);
+            if (index > -1) {
+                selectBranch(selectVal, index);
+            }
+        }
+
+        // Trigger Utama Set Active Branch
         function selectBranch(branchName, rowIndex) {
             activeBranch = branchName;
             
+            // Highlight baris di tabel
             document.querySelectorAll('#tableBody tr').forEach(tr => tr.classList.remove('active-row'));
-            document.getElementById(`row-${rowIndex}`).classList.add('active-row');
+            const row = document.getElementById(`row-${rowIndex}`);
+            if (row) row.classList.add('active-row');
 
-            const panel = document.getElementById('simulatorPanel');
-            panel.style.opacity = "1";
-            panel.style.pointerEvents = "auto";
-            document.getElementById('simTitle').innerText = `Data untuk cabang: ${branchName}`;
+            // Set isi Dropdown biar sinkron
+            const dropdown = document.getElementById('branchSelect');
+            if (dropdown.value !== branchName) dropdown.value = branchName;
 
+            // Hilangkan Overlay Kunci
+            const overlay = document.getElementById('simOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; }, 300);
+            }
+
+            // Isi nilai input simulasi berdasarkan data riil dari DB
             const bData = dbData.find(d => d.branch === branchName);
             document.getElementById('s1').value = bData.star1;
             document.getElementById('s2').value = bData.star2;
@@ -288,13 +326,14 @@
             document.getElementById('s4').value = bData.star4;
             document.getElementById('s5').value = bData.star5;
 
-            // Atur target default 0.1 lebih tinggi dari saat ini
+            // Setel target default (0.1 poin lebih tinggi dari rating saat ini)
             const n = bData.star1 + bData.star2 + bData.star3 + bData.star4 + bData.star5;
             const s = (bData.star1 * 1) + (bData.star2 * 2) + (bData.star3 * 3) + (bData.star4 * 4) + (bData.star5 * 5);
             const currentR = n > 0 ? (s / n) : 0;
             
             let defaultTarget = (Math.floor(currentR * 10) + 1) / 10;
             if (defaultTarget > 5) defaultTarget = 5.0;
+            if (defaultTarget < 1) defaultTarget = 4.0;
             
             document.getElementById('targetRating').value = defaultTarget.toFixed(1);
 
@@ -327,7 +366,7 @@
                 if (needed < 0) needed = 0;
             }
 
-            document.getElementById('neededReviews').innerText = needed.toLocaleString('id-ID');
+            document.getElementById('neededReviews').innerText = typeof needed === 'number' ? needed.toLocaleString('id-ID') : needed;
         }
 
         async function saveData() {
@@ -346,18 +385,17 @@
             };
 
             try {
-                // Uncomment this when deploying to actual Google Script
-                /*
+                // Eksekusi POST ke Google Sheets Asli
                 await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    mode: 'no-cors', // Pakai no-cors karena Apps Script redirect response
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                */
                 
-                showToast(`Data ${activeBranch} disimulasikan simpan (Demo Mode)`, "success");
+                showToast(`Data ${activeBranch} berhasil disimpan!`, "success");
                 
+                // Perbarui memori UI secara lokal
                 let bData = dbData.find(d => d.branch === activeBranch);
                 bData.star1 = payload.star1; bData.star2 = payload.star2;
                 bData.star3 = payload.star3; bData.star4 = payload.star4; bData.star5 = payload.star5;
