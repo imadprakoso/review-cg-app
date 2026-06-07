@@ -25,6 +25,15 @@
         .status-green { color: #34C759; background: rgba(52,199,89,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
         .status-yellow { color: #FFD60A; background: rgba(255,214,10,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
         .status-red { color: #FF3B30; background: rgba(255,59,48,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        
+        /* Toggle Switch */
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3A3A3C; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #34C759; }
+        input:focus + .slider { box-shadow: 0 0 1px #34C759; }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
@@ -77,9 +86,22 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- TABEL CABANG -->
             <div class="lg:col-span-2 ios-card overflow-hidden">
-                <div class="p-6 pb-2 flex justify-between items-center border-b border-white/5">
+                <div class="p-6 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5">
                     <h3 class="text-lg font-semibold text-white">Performa Cabang</h3>
-                    <button onclick="fetchData()" class="text-[#007AFF] hover:text-white text-sm transition-colors"><i class="fa-solid fa-rotate-right"></i> Sync Server</button>
+                    
+                    <div class="flex items-center gap-4 bg-[#2C2C2E]/50 px-4 py-2 rounded-xl border border-white/5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-[#8E8E93] font-medium">Auto Sync</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="syncModeToggle" checked onchange="toggleSyncMode()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="w-px h-4 bg-white/10"></div>
+                        <button onclick="fetchData()" id="btnSyncServer" class="text-[#007AFF] hover:text-[#005bb5] text-sm font-semibold transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-rotate-right" id="syncIcon"></i> <span id="syncText">Sync</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
@@ -108,7 +130,9 @@
                     <p class="text-[#8E8E93] font-medium text-sm">Pilih cabang untuk mulai simulasi</p>
                 </div>
 
-                <h3 class="text-lg font-semibold text-white mb-4"><i class="fa-solid fa-calculator text-[#AF52DE] mr-2"></i>Kalkulator Target Breakdown</h3>
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center justify-between">
+                    <span><i class="fa-solid fa-calculator text-[#AF52DE] mr-2"></i>Kalkulator Target</span>
+                </h3>
                 
                 <select id="branchSelect" onchange="selectBranchFromDropdown()" class="ios-input w-full py-3 px-4 mb-6 text-white font-semibold text-sm rounded-xl cursor-pointer appearance-none border border-white/10">
                     <option value="" disabled selected>Pilih Cabang...</option>
@@ -137,21 +161,31 @@
                     </div>
                 </div>
 
-                <button onclick="saveData()" id="saveBtn" class="w-full bg-[#007AFF] hover:bg-[#005bb5] text-white py-3 rounded-xl text-sm font-semibold transition-colors mb-6 shadow-lg shadow-[#007AFF]/20">
-                    Simpan Data Cabang
+                <button onclick="saveData()" id="saveBtn" class="w-full bg-[#007AFF] hover:bg-[#005bb5] text-white py-3 rounded-xl text-sm font-semibold transition-colors mb-6 shadow-lg shadow-[#007AFF]/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Data Cabang
                 </button>
 
                 <div class="pt-5 border-t border-white/10 mt-auto">
-                    <label class="block text-xs font-semibold text-[#8E8E93] mb-2 uppercase tracking-wider">Target Rating</label>
-                    <div class="flex gap-3 items-center mb-4">
-                        <input type="number" id="targetRating" step="0.1" max="5.0" min="1.0" class="ios-input w-24 py-2 text-white font-bold text-lg rounded-lg" value="4.7" oninput="calculate()">
-                        <span class="text-sm text-white font-medium" id="currentRatingLabel">dari 0.0</span>
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-[#8E8E93] mb-1 uppercase tracking-wider">Target Rating</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="targetRating" step="0.1" max="5.0" min="1.0" class="ios-input w-20 py-1.5 text-white font-bold text-lg rounded-lg" value="4.7" oninput="calculate()">
+                                <span class="text-xs text-[#8E8E93]">/ 5.0</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-[#8E8E93] uppercase tracking-wider block mb-1">Current</span>
+                            <span class="text-lg font-bold text-white bg-[#2C2C2E] px-3 py-1.5 rounded-lg border border-white/5" id="currentRatingLabel">0.00</span>
+                        </div>
                     </div>
                     
                     <div class="bg-gradient-to-r from-[#AF52DE]/10 to-[#5E2A84]/10 border border-[#AF52DE]/20 p-5 rounded-xl">
-                        <p class="text-[11px] text-[#AF52DE] font-medium mb-1">Dibutuhkan tambahan Bintang 5 murni:</p>
-                        <div class="text-3xl font-black text-white" id="neededReviews">0</div>
-                        <p class="text-[10px] text-[#8E8E93] mt-2">Dihitung otomatis saat ada perubahan rincian bintang.</p>
+                        <p class="text-[11px] text-[#AF52DE] font-medium mb-1">Estimasi tambahan Bintang 5 murni:</p>
+                        <div class="text-3xl font-black text-white flex items-baseline gap-2">
+                            <span id="neededReviews">0</span>
+                            <span class="text-sm font-medium text-[#8E8E93] hidden" id="neededSuffix">ulasan</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -159,12 +193,12 @@
     </div>
 
     <script>
-        // URL Apps Script Web App lu
         const API_URL = "https://script.google.com/macros/s/AKfycbzYFEBvgdj5f9BTV9M_EBLlru7Fd7I77_lXcDWbRCuzHA-mq0wJDhMKdF_Z5pTeNDmsyA/exec";
         
         let dbData = [];
         let defaultBranches = ["Online", "CG Tuparev", "Graha", "Galuh", "Purwakarta", "Cianjur"];
         let activeBranch = null;
+        let isAutoSync = true;
 
         function checkPin() {
             if (document.getElementById('pinInput').value === "1155") {
@@ -174,7 +208,6 @@
                     document.getElementById('appWrapper').classList.remove('hidden');
                     document.getElementById('appWrapper').classList.add('flex');
                     
-                    // LANGSUNG TARIK DATA RIIL DARI GOOGLE SHEETS
                     fetchData();
                 }, 400);
             } else {
@@ -192,7 +225,26 @@
             setTimeout(() => { box.classList.remove('show'); }, 3000);
         }
 
+        function toggleSyncMode() {
+            isAutoSync = document.getElementById('syncModeToggle').checked;
+            const btnSync = document.getElementById('btnSyncServer');
+            
+            if (isAutoSync) {
+                showToast("Auto Sync Aktif: Data ditarik dari Server", "success");
+                btnSync.classList.remove('opacity-50', 'cursor-not-allowed');
+                fetchData();
+            } else {
+                showToast("Manual Mode: Data Server diabaikan", "error");
+                btnSync.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
         async function fetchData() {
+            if (!isAutoSync) return; // Stop jika mode manual
+
+            const syncIcon = document.getElementById('syncIcon');
+            syncIcon.classList.add('fa-spin');
+            
             document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menyinkronkan data dengan server...</td></tr>';
             try {
                 const response = await fetch(`${API_URL}?action=getAnalytics&nocache=${new Date().getTime()}`);
@@ -204,7 +256,6 @@
                     dbData = [];
                 }
                 
-                // Pastikan branch dasar ada walaupun datanya kosong
                 defaultBranches.forEach(b => {
                     if (!dbData.find(d => d.branch === b || d.branch === `${b} Tuparev`)) {
                         dbData.push({ branch: b, star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 });
@@ -219,12 +270,13 @@
                 console.error("Gagal fetch API", err);
                 showToast("Koneksi gagal. Pastikan URL API sudah benar.", "error");
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Terjadi kesalahan koneksi jaringan.</td></tr>';
+            } finally {
+                syncIcon.classList.remove('fa-spin');
             }
         }
 
         function updateDropdownOptions() {
             const select = document.getElementById('branchSelect');
-            // Reset isi
             select.innerHTML = '<option value="" disabled selected>Pilih Cabang...</option>';
             dbData.forEach((d) => {
                 select.insertAdjacentHTML('beforeend', `<option value="${d.branch}">${d.branch}</option>`);
@@ -275,7 +327,6 @@
                 tbody.insertAdjacentHTML('beforeend', tr);
             });
 
-            // Re-highlight baris jika sebelumnya sudah ada yang diklik
             if (activeBranch) {
                 const index = dbData.findIndex(d => d.branch === activeBranch);
                 if (index > -1) {
@@ -289,7 +340,6 @@
             document.getElementById('w-worst').innerText = worstBranch.name;
         }
 
-        // Trigger dari Dropdown Kalkulator
         function selectBranchFromDropdown() {
             const selectVal = document.getElementById('branchSelect').value;
             const index = dbData.findIndex(d => d.branch === selectVal);
@@ -298,27 +348,22 @@
             }
         }
 
-        // Trigger Utama Set Active Branch
         function selectBranch(branchName, rowIndex) {
             activeBranch = branchName;
             
-            // Highlight baris di tabel
             document.querySelectorAll('#tableBody tr').forEach(tr => tr.classList.remove('active-row'));
             const row = document.getElementById(`row-${rowIndex}`);
             if (row) row.classList.add('active-row');
 
-            // Set isi Dropdown biar sinkron
             const dropdown = document.getElementById('branchSelect');
             if (dropdown.value !== branchName) dropdown.value = branchName;
 
-            // Hilangkan Overlay Kunci
             const overlay = document.getElementById('simOverlay');
             if (overlay) {
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 300);
             }
 
-            // Isi nilai input simulasi berdasarkan data riil dari DB
             const bData = dbData.find(d => d.branch === branchName);
             document.getElementById('s1').value = bData.star1;
             document.getElementById('s2').value = bData.star2;
@@ -326,7 +371,6 @@
             document.getElementById('s4').value = bData.star4;
             document.getElementById('s5').value = bData.star5;
 
-            // Setel target default (0.1 poin lebih tinggi dari rating saat ini)
             const n = bData.star1 + bData.star2 + bData.star3 + bData.star4 + bData.star5;
             const s = (bData.star1 * 1) + (bData.star2 * 2) + (bData.star3 * 3) + (bData.star4 * 4) + (bData.star5 * 5);
             const currentR = n > 0 ? (s / n) : 0;
@@ -354,11 +398,22 @@
             const s = (s1 * 1) + (s2 * 2) + (s3 * 3) + (s4 * 4) + (s5 * 5);
             const currentRating = n > 0 ? (s / n) : 0;
 
-            document.getElementById('currentRatingLabel').innerText = `saat ini ${currentRating.toFixed(2)}`;
-
+            document.getElementById('currentRatingLabel').innerText = currentRating.toFixed(2);
+            
+            const neededSuffix = document.getElementById('neededSuffix');
             let needed = 0;
-            if (target >= 5 && currentRating < 5) {
-                needed = "Mustahil (Sudah ada < 5)";
+
+            // Logika Penyesuaian Jika Target = 5.0
+            if (target === 5.0) {
+                if (currentRating < 5.0 && n > 0) {
+                    // Secara matematis murni nggak bisa 5.0 jika sudah ada nilai < 5
+                    // Tapi Google kadang membulatkan 4.95 jadi 5.0. Kita pakai target 4.95
+                    const proxyTarget = 4.95;
+                    needed = Math.ceil((proxyTarget * n - s) / (5 - proxyTarget));
+                    if (needed < 0) needed = 0;
+                } else if (currentRating === 5.0) {
+                    needed = "Tercapai";
+                }
             } else if (currentRating >= target) {
                 needed = "Tercapai";
             } else {
@@ -366,13 +421,30 @@
                 if (needed < 0) needed = 0;
             }
 
-            document.getElementById('neededReviews').innerText = typeof needed === 'number' ? needed.toLocaleString('id-ID') : needed;
+            if (typeof needed === 'number') {
+                document.getElementById('neededReviews').innerText = needed.toLocaleString('id-ID');
+                neededSuffix.classList.remove('hidden');
+            } else {
+                document.getElementById('neededReviews').innerText = needed;
+                neededSuffix.classList.add('hidden');
+            }
+            
+            // Re-render tabel kalau mode Manual (simulasi on-the-fly)
+            if(!isAutoSync) {
+               let bData = dbData.find(d => d.branch === activeBranch);
+               if(bData) {
+                   bData.star1 = s1; bData.star2 = s2; bData.star3 = s3; bData.star4 = s4; bData.star5 = s5;
+                   processAndRender();
+               }
+            }
         }
 
         async function saveData() {
             if (!activeBranch) return;
             const btn = document.getElementById('saveBtn');
+            const originalContent = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...';
+            btn.disabled = true;
             
             const payload = {
                 action: 'updateAnalytics',
@@ -385,15 +457,18 @@
             };
 
             try {
-                // Eksekusi POST ke Google Sheets Asli
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Pakai no-cors karena Apps Script redirect response
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                showToast(`Data ${activeBranch} berhasil disimpan!`, "success");
+                if (isAutoSync) {
+                    // Eksekusi POST ke Google Sheets Asli
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast(`Data ${activeBranch} berhasil disimpan ke server!`, "success");
+                } else {
+                    showToast(`Mode Manual: Data ${activeBranch} disimpan secara lokal.`, "success");
+                }
                 
                 // Perbarui memori UI secara lokal
                 let bData = dbData.find(d => d.branch === activeBranch);
@@ -402,9 +477,10 @@
                 processAndRender();
                 
             } catch (err) {
-                showToast("Gagal menyimpan ke Google Sheets.", "error");
+                showToast("Gagal menyimpan ke server.", "error");
             } finally {
-                btn.innerHTML = 'Simpan Data Cabang';
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
             }
         }
     </script>
