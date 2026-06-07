@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisa Rating - CG Maps Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #F2F2F2; min-height: 100vh; }
+        .ios-card { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; }
+        .ios-input { background-color: #2C2C2E; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s ease; outline: none; text-align: center; }
+        .ios-input:focus { border-color: #007AFF; box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        th { color: #8E8E93; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left;}
+        td { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; vertical-align: middle;}
+        tr:last-child td { border-bottom: none; }
+        .active-row { background-color: rgba(0, 122, 255, 0.1); }
+        .msg-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%); z-index: 50; padding: 12px 24px; border-radius: 9999px; font-weight: 500; font-size: 14px; backdrop-filter: blur(20px); transition: transform 0.4s; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+        .msg-box.show { transform: translateX(-50%) translateY(0); }
+        .msg-error { background-color: rgba(255, 59, 48, 0.9); }
+        .msg-success { background-color: rgba(52, 199, 89, 0.9); }
+        .status-green { color: #34C759; background: rgba(52,199,89,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .status-yellow { color: #FFD60A; background: rgba(255,214,10,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .status-red { color: #FF3B30; background: rgba(255,59,48,0.1); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+    <div id="msgBox" class="msg-box"></div>
+
+    <!-- LOCK SCREEN -->
+    <div id="lockScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="text-[#0A84FF] text-6xl mb-6"><i class="fa-solid fa-chart-pie"></i></div>
+        <h2 class="text-2xl font-bold mb-2">Analisa Rating</h2>
+        <p class="text-[#8E8E93] text-sm mb-8">Masukkan PIN rahasia (1155 untuk demo).</p>
+        <input type="password" id="pinInput" placeholder="••••" class="ios-input bg-[#1C1C1E] text-center text-3xl tracking-[0.5em] p-4 rounded-2xl w-64 mb-6 outline-none text-white">
+        <button onclick="checkPin()" class="bg-[#007AFF] hover:bg-[#005bb5] text-white font-semibold py-3 px-12 rounded-xl transition-colors">Akses Analitik</button>
+    </div>
+
+    <div id="appWrapper" class="w-full max-w-7xl hidden flex-col gap-6">
+        <!-- HEADER -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white"><i class="fa-solid fa-chart-line text-[#007AFF] mr-3"></i>Rating Dashboard</h1>
+                <p class="text-[#8E8E93] text-sm mt-1" id="lastUpdated">Last updated: -</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="bg-[#2C2C2E] text-[#8E8E93] px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"><i class="fa-solid fa-users-gear mr-2"></i>Data Peserta</button>
+                <button class="bg-[#2C2C2E] text-[#8E8E93] px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed"><i class="fa-solid fa-arrow-left mr-2"></i>Web Utama</button>
+            </div>
+        </div>
+
+        <!-- WIDGETS -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="ios-card p-5 flex flex-col justify-center">
+                <p class="text-[#8E8E93] text-xs font-semibold uppercase tracking-wider mb-1">Total Review Global</p>
+                <div class="text-3xl font-bold text-white" id="w-total-review">0</div>
+            </div>
+            <div class="ios-card p-5 flex flex-col justify-center">
+                <p class="text-[#8E8E93] text-xs font-semibold uppercase tracking-wider mb-1">Rating Tertimbang</p>
+                <div class="text-3xl font-bold text-[#FFD60A]" id="w-rating">0.0</div>
+            </div>
+            <div class="ios-card p-5 flex flex-col justify-center">
+                <p class="text-[#8E8E93] text-xs font-semibold uppercase tracking-wider mb-1">Cabang Terbaik</p>
+                <div class="text-xl font-bold text-[#34C759]" id="w-best">-</div>
+            </div>
+            <div class="ios-card p-5 flex flex-col justify-center">
+                <p class="text-[#8E8E93] text-xs font-semibold uppercase tracking-wider mb-1">Prioritas (Pantau)</p>
+                <div class="text-xl font-bold text-[#FF3B30]" id="w-worst">-</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- TABEL CABANG -->
+            <div class="lg:col-span-2 ios-card overflow-hidden">
+                <div class="p-6 pb-2 flex justify-between items-center border-b border-white/5">
+                    <h3 class="text-lg font-semibold text-white">Performa Cabang</h3>
+                    <button onclick="fetchData()" class="text-[#007AFF] hover:text-white text-sm transition-colors"><i class="fa-solid fa-rotate-right"></i> Sync</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-[#1C1C1E]">
+                            <tr>
+                                <th>Cabang</th>
+                                <th>Total Review</th>
+                                <th>Rating</th>
+                                <th>% Positif (4-5)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menghitung data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SIMULATOR & INPUT -->
+            <div class="ios-card p-6 flex flex-col" id="simulatorPanel" style="opacity: 0.5; pointer-events: none; transition: opacity 0.3s;">
+                <h3 class="text-lg font-semibold text-white mb-1"><i class="fa-solid fa-calculator text-[#AF52DE] mr-2"></i>Kalkulator Target</h3>
+                <p class="text-[#8E8E93] text-[12px] mb-6" id="simTitle">Pilih cabang di tabel untuk memulai.</p>
+                
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
+                        <span class="text-sm font-medium text-white flex items-center w-24"><i class="fa-solid fa-star text-[#FFD60A] text-xs mr-2"></i> 5 Bintang</span>
+                        <input type="number" id="s5" class="ios-input w-20 py-1 text-white font-bold rounded" value="0" oninput="calculate()">
+                    </div>
+                    <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
+                        <span class="text-sm font-medium text-white flex items-center w-24"><i class="fa-solid fa-star text-[#FFD60A] text-xs mr-2"></i> 4 Bintang</span>
+                        <input type="number" id="s4" class="ios-input w-20 py-1 text-white font-bold rounded" value="0" oninput="calculate()">
+                    </div>
+                    <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
+                        <span class="text-sm font-medium text-white flex items-center w-24"><i class="fa-solid fa-star text-[#FFD60A] text-xs mr-2"></i> 3 Bintang</span>
+                        <input type="number" id="s3" class="ios-input w-20 py-1 text-white font-bold rounded" value="0" oninput="calculate()">
+                    </div>
+                    <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
+                        <span class="text-sm font-medium text-white flex items-center w-24"><i class="fa-solid fa-star text-[#FFD60A] text-xs mr-2"></i> 2 Bintang</span>
+                        <input type="number" id="s2" class="ios-input w-20 py-1 text-white font-bold rounded" value="0" oninput="calculate()">
+                    </div>
+                    <div class="flex justify-between items-center bg-[#2C2C2E]/50 p-2 rounded-lg border border-white/5">
+                        <span class="text-sm font-medium text-white flex items-center w-24"><i class="fa-solid fa-star text-[#FFD60A] text-xs mr-2"></i> 1 Bintang</span>
+                        <input type="number" id="s1" class="ios-input w-20 py-1 text-white font-bold rounded" value="0" oninput="calculate()">
+                    </div>
+                </div>
+
+                <button onclick="saveData()" id="saveBtn" class="w-full bg-[#007AFF] hover:bg-[#005bb5] text-white py-3 rounded-xl text-sm font-semibold transition-colors mb-6 shadow-lg shadow-[#007AFF]/20">
+                    Simpan Data Cabang
+                </button>
+
+                <div class="pt-5 border-t border-white/10 mt-auto">
+                    <label class="block text-xs font-semibold text-[#8E8E93] mb-2 uppercase tracking-wider">Target Rating</label>
+                    <div class="flex gap-3 items-center mb-4">
+                        <input type="number" id="targetRating" step="0.1" max="5.0" min="1.0" class="ios-input w-24 py-2 text-white font-bold text-lg rounded-lg" value="4.7" oninput="calculate()">
+                        <span class="text-sm text-white font-medium" id="currentRatingLabel">dari 0.0</span>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-[#AF52DE]/10 to-[#5E2A84]/10 border border-[#AF52DE]/20 p-5 rounded-xl">
+                        <p class="text-[11px] text-[#AF52DE] font-medium mb-1">Dibutuhkan tambahan Bintang 5 murni:</p>
+                        <div class="text-3xl font-black text-white" id="neededReviews">0</div>
+                        <p class="text-[10px] text-[#8E8E93] mt-2">Agar target di atas dapat tercapai secara matematis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ganti URL ini dengan URL Web App Apps Script lu jika sudah di deploy ulang
+        const API_URL = "https://script.google.com/macros/s/AKfycbydtGWuQdxy4JBavrD_MqtdE0xoc8dfNhQGyQWd40xs6DjavXj3zhlCPD9wkbT2OQHvww/exec";
+        
+        let dbData = [];
+        let defaultBranches = ["Online", "CG Tuparev", "Graha", "Galuh", "Purwakarta", "Cianjur"];
+        let activeBranch = null;
+
+        function checkPin() {
+            if (document.getElementById('pinInput').value === "1155") {
+                document.getElementById('lockScreen').style.opacity = "0";
+                setTimeout(() => {
+                    document.getElementById('lockScreen').style.display = 'none';
+                    document.getElementById('appWrapper').classList.remove('hidden');
+                    document.getElementById('appWrapper').classList.add('flex');
+                    
+                    // Isi data dummy jika API gagal (untuk demo di preview Canvas)
+                    populateDummyData();
+                    processAndRender();
+                }, 400);
+            } else {
+                showToast("PIN Salah!", "error");
+                document.getElementById('pinInput').value = "";
+            }
+        }
+        
+        document.getElementById('pinInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPin(); });
+
+        function showToast(text, type) {
+            const box = document.getElementById('msgBox');
+            box.innerText = text;
+            box.className = `msg-box show ${type === 'error' ? 'msg-error' : 'msg-success'}`;
+            setTimeout(() => { box.classList.remove('show'); }, 3000);
+        }
+
+        // Dummy data jika preview Canvas belum bisa terhubung ke API Google Script
+        function populateDummyData() {
+            dbData = [
+                { branch: "CG Tuparev", star1: 50, star2: 14, star3: 38, star4: 65, star5: 861 },
+                { branch: "Purwakarta", star1: 19, star2: 4, star3: 7, star4: 20, star5: 473 },
+                { branch: "Graha", star1: 27, star2: 12, star3: 20, star4: 38, star5: 446 },
+                { branch: "Galuh", star1: 22, star2: 8, star3: 27, star4: 75, star5: 288 },
+                { branch: "Cianjur", star1: 3, star2: 0, star3: 3, star4: 4, star5: 161 },
+                { branch: "Online", star1: 0, star2: 0, star3: 0, star4: 0, star5: 128 }
+            ];
+            document.getElementById('lastUpdated').innerText = `Last updated: ${new Date().toLocaleString('id-ID')} (Data Demo)`;
+        }
+
+        async function fetchData() {
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menyinkronkan data...</td></tr>';
+            try {
+                const response = await fetch(`${API_URL}?action=getAnalytics&nocache=${new Date().getTime()}`);
+                const res = await response.json();
+                
+                if(res.data && res.data.length > 0) {
+                    dbData = res.data;
+                }
+                
+                defaultBranches.forEach(b => {
+                    if (!dbData.find(d => d.branch === b)) {
+                        dbData.push({ branch: b, star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 });
+                    }
+                });
+
+                document.getElementById('lastUpdated').innerText = `Last updated: ${new Date().toLocaleString('id-ID')}`;
+                processAndRender();
+            } catch (err) {
+                console.error("Gagal fetch, pakai data dummy", err);
+                populateDummyData();
+                processAndRender();
+            }
+        }
+
+        function processAndRender() {
+            let totalReviewGlobal = 0;
+            let totalSkorGlobal = 0;
+            let bestBranch = { name: "-", rating: 0 };
+            let worstBranch = { name: "-", rating: 5 };
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            dbData.forEach((d, index) => {
+                const totalReview = d.star1 + d.star2 + d.star3 + d.star4 + d.star5;
+                const totalScore = (d.star1 * 1) + (d.star2 * 2) + (d.star3 * 3) + (d.star4 * 4) + (d.star5 * 5);
+                const rating = totalReview > 0 ? (totalScore / totalReview) : 0;
+                const positif = totalReview > 0 ? ((d.star4 + d.star5) / totalReview * 100) : 0;
+
+                totalReviewGlobal += totalReview;
+                totalSkorGlobal += totalScore;
+
+                if (totalReview > 10) { 
+                    if (rating > bestBranch.rating) bestBranch = { name: d.branch, rating: rating };
+                    if (rating < worstBranch.rating) worstBranch = { name: d.branch, rating: rating };
+                }
+
+                let statusHtml = '<span class="text-[#8E8E93] text-xs">Belum Ada Data</span>';
+                if (totalReview > 0) {
+                    if (rating >= 4.5) statusHtml = '<span class="status-green">Sangat Baik</span>';
+                    else if (rating >= 4.0) statusHtml = '<span class="status-yellow">Baik</span>';
+                    else if (rating >= 3.5) statusHtml = '<span class="status-red">Perlu Dipantau</span>';
+                    else statusHtml = '<span class="status-red">Bahaya</span>';
+                }
+
+                const safeBranch = d.branch.replace(/'/g, "\\'");
+                const tr = `
+                    <tr class="hover:bg-white/[0.05] transition-colors cursor-pointer" id="row-${index}" onclick="selectBranch('${safeBranch}', ${index})">
+                        <td class="font-semibold text-white">${d.branch}</td>
+                        <td class="font-medium">${totalReview.toLocaleString('id-ID')}</td>
+                        <td class="font-bold text-[#007AFF]">${rating.toFixed(2)}</td>
+                        <td>${positif.toFixed(1)}%</td>
+                        <td>${statusHtml}</td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', tr);
+            });
+
+            document.getElementById('w-total-review').innerText = totalReviewGlobal.toLocaleString('id-ID');
+            document.getElementById('w-rating').innerText = totalReviewGlobal > 0 ? (totalSkorGlobal / totalReviewGlobal).toFixed(2) : "0.0";
+            document.getElementById('w-best').innerText = bestBranch.name;
+            document.getElementById('w-worst').innerText = worstBranch.name;
+        }
+
+        function selectBranch(branchName, rowIndex) {
+            activeBranch = branchName;
+            
+            document.querySelectorAll('#tableBody tr').forEach(tr => tr.classList.remove('active-row'));
+            document.getElementById(`row-${rowIndex}`).classList.add('active-row');
+
+            const panel = document.getElementById('simulatorPanel');
+            panel.style.opacity = "1";
+            panel.style.pointerEvents = "auto";
+            document.getElementById('simTitle').innerText = `Data untuk cabang: ${branchName}`;
+
+            const bData = dbData.find(d => d.branch === branchName);
+            document.getElementById('s1').value = bData.star1;
+            document.getElementById('s2').value = bData.star2;
+            document.getElementById('s3').value = bData.star3;
+            document.getElementById('s4').value = bData.star4;
+            document.getElementById('s5').value = bData.star5;
+
+            // Atur target default 0.1 lebih tinggi dari saat ini
+            const n = bData.star1 + bData.star2 + bData.star3 + bData.star4 + bData.star5;
+            const s = (bData.star1 * 1) + (bData.star2 * 2) + (bData.star3 * 3) + (bData.star4 * 4) + (bData.star5 * 5);
+            const currentR = n > 0 ? (s / n) : 0;
+            
+            let defaultTarget = (Math.floor(currentR * 10) + 1) / 10;
+            if (defaultTarget > 5) defaultTarget = 5.0;
+            
+            document.getElementById('targetRating').value = defaultTarget.toFixed(1);
+
+            calculate();
+        }
+
+        function calculate() {
+            if (!activeBranch) return;
+
+            const s1 = parseInt(document.getElementById('s1').value) || 0;
+            const s2 = parseInt(document.getElementById('s2').value) || 0;
+            const s3 = parseInt(document.getElementById('s3').value) || 0;
+            const s4 = parseInt(document.getElementById('s4').value) || 0;
+            const s5 = parseInt(document.getElementById('s5').value) || 0;
+            const target = parseFloat(document.getElementById('targetRating').value) || 4.7;
+
+            const n = s1 + s2 + s3 + s4 + s5;
+            const s = (s1 * 1) + (s2 * 2) + (s3 * 3) + (s4 * 4) + (s5 * 5);
+            const currentRating = n > 0 ? (s / n) : 0;
+
+            document.getElementById('currentRatingLabel').innerText = `saat ini ${currentRating.toFixed(2)}`;
+
+            let needed = 0;
+            if (target >= 5 && currentRating < 5) {
+                needed = "Mustahil (Sudah ada < 5)";
+            } else if (currentRating >= target) {
+                needed = "Tercapai";
+            } else {
+                needed = Math.ceil((target * n - s) / (5 - target));
+                if (needed < 0) needed = 0;
+            }
+
+            document.getElementById('neededReviews').innerText = needed.toLocaleString('id-ID');
+        }
+
+        async function saveData() {
+            if (!activeBranch) return;
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...';
+            
+            const payload = {
+                action: 'updateAnalytics',
+                branch: activeBranch,
+                star1: parseInt(document.getElementById('s1').value) || 0,
+                star2: parseInt(document.getElementById('s2').value) || 0,
+                star3: parseInt(document.getElementById('s3').value) || 0,
+                star4: parseInt(document.getElementById('s4').value) || 0,
+                star5: parseInt(document.getElementById('s5').value) || 0
+            };
+
+            try {
+                // Uncomment this when deploying to actual Google Script
+                /*
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                */
+                
+                showToast(`Data ${activeBranch} disimulasikan simpan (Demo Mode)`, "success");
+                
+                let bData = dbData.find(d => d.branch === activeBranch);
+                bData.star1 = payload.star1; bData.star2 = payload.star2;
+                bData.star3 = payload.star3; bData.star4 = payload.star4; bData.star5 = payload.star5;
+                processAndRender();
+                
+            } catch (err) {
+                showToast("Gagal menyimpan ke Google Sheets.", "error");
+            } finally {
+                btn.innerHTML = 'Simpan Data Cabang';
+            }
+        }
+    </script>
+</body>
+</html>
