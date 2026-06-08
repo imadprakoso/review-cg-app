@@ -257,12 +257,22 @@
             if(syncToggle) syncToggle.checked = isAutoInputMode;
             
             updateUIBasedOnMode();
+
+            // SENSOR ENTER UNTUK PIN INPUT agar tidak perlu ngeklik tombol
+            const pinInput = document.getElementById('pinInput');
+            if (pinInput) {
+                pinInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        checkPin();
+                    }
+                });
+            }
         });
 
         function checkPin() {
             const pinInput = document.getElementById('pinInput');
             if (pinInput && pinInput.value === "1155") {
-                document.getElementById('pinInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPin(); });
+                document.getElementById('lockScreen').style.opacity = "0";
                 setTimeout(() => {
                     document.getElementById('lockScreen').style.display = 'none';
                     document.getElementById('appWrapper').classList.remove('hidden');
