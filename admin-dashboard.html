@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #000000; color: #F2F2F2; min-height: 100vh; }
         .ios-card { background-color: #1C1C1E; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; position: relative; }
@@ -177,57 +176,54 @@
                     </div>
                 </div>
 
-                <button onclick="saveData()" id="saveBtn" class="w-full bg-[#007AFF] hover:bg-[#005bb5] active:scale-[0.98] text-white py-3 rounded-xl text-sm font-semibold transition-all mb-6 shadow-lg shadow-[#007AFF]/20 flex items-center justify-center gap-2">
+                <button onclick="saveData()" id="saveBtn" class="w-full bg-[#007AFF] hover:bg-[#005bb5] text-white py-3 rounded-xl text-sm font-semibold transition-colors mb-6 shadow-lg shadow-[#007AFF]/20 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Presisi Cabang
                 </button>
 
-                <!-- UI TARGET RATING BARU: LEBIH RAPI & SIMETRIS -->
                 <div class="pt-5 border-t border-white/10 mt-auto">
-                    <div class="flex justify-between items-center mb-5 bg-[#1C1C1E] rounded-xl">
-                        <!-- Kotak Target -->
-                        <div class="flex-1 flex flex-col justify-center px-4 py-3 bg-[#2C2C2E]/40 border border-white/5 rounded-l-xl border-r-0">
-                            <label class="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-1">Target Rating</label>
-                            <div class="flex items-center gap-1">
-                                <input type="number" id="targetRating" step="0.1" max="5.0" min="1.0" class="bg-transparent text-white font-bold text-xl w-14 outline-none border-b border-white/20 focus:border-[#007AFF] transition-colors pb-1 text-center" value="4.7" oninput="calculate()">
-                                <span class="text-xs text-[#8E8E93] font-medium mt-1">/ 5.0</span>
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-[#8E8E93] mb-1 uppercase tracking-wider">Target Rating</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="targetRating" step="0.1" max="5.0" min="1.0" class="ios-input w-20 py-1.5 text-white font-bold text-lg rounded-lg" value="4.7" oninput="calculate()">
+                                <span class="text-xs text-[#8E8E93]">/ 5.0</span>
                             </div>
                         </div>
-                        
-                        <!-- Kotak Current -->
-                        <div class="flex-1 flex flex-col justify-center px-4 py-3 bg-[#2C2C2E]/40 border border-white/5 rounded-r-xl">
-                            <label class="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-1 text-right">Saat Ini</label>
-                            <div class="text-right mt-1">
-                                <span class="text-xl font-bold text-[#FFD60A]" id="currentRatingLabel">0.00</span>
-                            </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-[#8E8E93] uppercase tracking-wider block mb-1">Current</span>
+                            <span class="text-lg font-bold text-white bg-[#2C2C2E] px-3 py-1.5 rounded-lg border border-white/5" id="currentRatingLabel">0.00</span>
                         </div>
                     </div>
                     
-                    <!-- Kotak Estimasi Utama -->
-                    <div class="bg-gradient-to-r from-[#AF52DE]/15 to-[#5E2A84]/15 border border-[#AF52DE]/30 p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden">
-                        <!-- Ikon Bintang Transparan sebagai Dekorasi Background -->
-                        <div class="absolute -top-4 -right-4 text-[#AF52DE]/10 text-6xl"><i class="fa-solid fa-star"></i></div>
-                        
-                        <p class="text-[11px] text-[#D894FF] font-medium mb-2 relative z-10 uppercase tracking-wider">Butuh Tambahan Bintang 5:</p>
-                        <div class="text-4xl font-black text-white flex items-baseline gap-2 relative z-10 tracking-tight">
+                    <div class="bg-gradient-to-r from-[#AF52DE]/10 to-[#5E2A84]/10 border border-[#AF52DE]/20 p-5 rounded-xl">
+                        <p class="text-[11px] text-[#AF52DE] font-medium mb-1">Estimasi tambahan Bintang 5 murni:</p>
+                        <div class="text-3xl font-black text-white flex items-baseline gap-2">
                             <span id="neededReviews">0</span>
-                            <span class="text-sm font-semibold text-[#8E8E93] hidden" id="neededSuffix">ulasan</span>
+                            <span class="text-sm font-medium text-[#8E8E93] hidden" id="neededSuffix">ulasan</span>
                         </div>
                     </div>
                 </div>
-                
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = https://script.google.com/macros/s/AKfycbzg91ROfU-f_pe5quj7TDKW5LQZ2q8JDn6k4c1ZhmNVztsork0qzuHShZ7-Yv0EwTkJCg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzg91ROfU-f_pe5quj7TDKW5LQZ2q8JDn6k4c1ZhmNVztsork0qzuHShZ7-Yv0EwTkJCg/exec";
         
         let dbData = [];
         let defaultBranches = ["Online", "CG Tuparev", "Graha", "Galuh", "Purwakarta", "Cianjur"];
         let activeBranch = null;
         
-        // Mode Auto: true (otomatis tambah bintang 5 via Web), false (Admin set manual)
-        let isAutoInputMode = localStorage.getItem('adminAutoInputMode') !== 'false';
+        // Anti-Crash LocalStorage Logic
+        let isAutoInputMode = true;
+        try {
+            const savedState = localStorage.getItem('adminAutoInputMode');
+            if (savedState === 'false') {
+                isAutoInputMode = false;
+            }
+        } catch (e) {
+            console.warn("LocalStorage diblokir, sistem menggunakan default: AUTO ON.");
+        }
 
         // Setup Opsi Dropdown Periode Berdasarkan Waktu Saat Ini
         function setupPeriodDropdown() {
@@ -248,12 +244,26 @@
             document.getElementById('tablePeriodLabel').innerText = `(${currentPeriodStr})`;
         }
 
-        document.getElementById('syncModeToggle').checked = isAutoInputMode;
-        updateUIBasedOnMode();
-        setupPeriodDropdown(); 
+        // Dieksekusi otomatis ketika seluruh halaman berhasil diload (Anti-Crash)
+        window.addEventListener('DOMContentLoaded', () => {
+            setupPeriodDropdown(); 
+            
+            const syncToggle = document.getElementById('syncModeToggle');
+            if(syncToggle) syncToggle.checked = isAutoInputMode;
+            
+            updateUIBasedOnMode();
+            
+            const pinInput = document.getElementById('pinInput');
+            if(pinInput) {
+                pinInput.addEventListener('keypress', function(e) { 
+                    if (e.key === 'Enter') checkPin(); 
+                });
+            }
+        });
 
         function checkPin() {
-            if (document.getElementById('pinInput').value === "1155") {
+            const pinInput = document.getElementById('pinInput');
+            if (pinInput && pinInput.value === "1155") {
                 document.getElementById('lockScreen').style.opacity = "0";
                 setTimeout(() => {
                     document.getElementById('lockScreen').style.display = 'none';
@@ -264,22 +274,28 @@
                 }, 400);
             } else {
                 showToast("PIN Salah!", "error");
-                document.getElementById('pinInput').value = "";
+                if(pinInput) pinInput.value = "";
             }
         }
-        
-        document.getElementById('pinInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkPin(); });
 
         function showToast(text, type) {
             const box = document.getElementById('msgBox');
+            if(!box) return;
             box.innerText = text;
             box.className = `msg-box show ${type === 'error' ? 'msg-error' : 'msg-success'}`;
             setTimeout(() => { box.classList.remove('show'); }, 3000);
         }
 
         function toggleSyncMode() {
-            isAutoInputMode = document.getElementById('syncModeToggle').checked;
-            localStorage.setItem('adminAutoInputMode', isAutoInputMode); 
+            const toggle = document.getElementById('syncModeToggle');
+            if(!toggle) return;
+            
+            isAutoInputMode = toggle.checked;
+            try {
+                localStorage.setItem('adminAutoInputMode', isAutoInputMode); 
+            } catch (e) {
+                console.warn("Gagal menyimpan ke LocalStorage.");
+            }
             
             updateUIBasedOnMode();
             
@@ -295,16 +311,22 @@
             const inputGroup = document.getElementById('inputGroup');
             const saveBtn = document.getElementById('saveBtn');
 
+            if (!label || !inputGroup || !saveBtn) return;
+
             if (isAutoInputMode) {
                 label.innerText = "AUTO BINTANG 5";
-                label.classList.replace('text-[#8E8E93]', 'text-[#34C759]');
+                label.classList.remove('text-[#8E8E93]', 'text-white');
+                label.classList.add('text-[#34C759]');
+                
                 // Kunci input jika mode Auto
                 inputGroup.classList.add('blur-overlay');
                 saveBtn.disabled = true;
                 saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
                 label.innerText = "MANUAL INPUT";
-                label.classList.replace('text-[#34C759]', 'text-[#8E8E93]');
+                label.classList.remove('text-[#34C759]', 'text-white');
+                label.classList.add('text-[#8E8E93]');
+                
                 // Buka kunci input
                 inputGroup.classList.remove('blur-overlay');
                 saveBtn.disabled = false;
@@ -320,7 +342,9 @@
             document.getElementById('tablePeriodLabel').innerText = `(${val})`;
 
             activeBranch = null;
-            document.getElementById('branchSelect').value = "";
+            const branchSelect = document.getElementById('branchSelect');
+            if(branchSelect) branchSelect.value = "";
+            
             const overlay = document.getElementById('simOverlay');
             if (overlay) {
                 overlay.style.opacity = '1';
@@ -332,11 +356,14 @@
 
         async function fetchData() {
             const syncIcon = document.getElementById('syncIcon');
-            syncIcon.classList.remove('hidden');
+            if(syncIcon) syncIcon.classList.remove('hidden');
             
-            const selectedPeriode = document.getElementById('periodFilter').value;
+            const selectedPeriode = document.getElementById('periodFilter') ? document.getElementById('periodFilter').value : 'current';
 
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menarik data periode ${selectedPeriode}...</td></tr>`;
+            const tableBody = document.getElementById('tableBody');
+            if(tableBody) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-[#8E8E93] py-10"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Menarik data periode ${selectedPeriode}...</td></tr>`;
+            }
             
             try {
                 const response = await fetch(`${API_URL}?action=getAnalytics&periode=${selectedPeriode}&nocache=${new Date().getTime()}`);
@@ -354,21 +381,23 @@
                     }
                 });
 
-                document.getElementById('lastUpdated').innerText = `Last updated: ${new Date().toLocaleString('id-ID')}`;
+                const lastUpdateEl = document.getElementById('lastUpdated');
+                if(lastUpdateEl) lastUpdateEl.innerText = `Last updated: ${new Date().toLocaleString('id-ID')}`;
                 
                 updateDropdownOptions();
                 processAndRender();
             } catch (err) {
                 console.error("Gagal fetch API", err);
                 showToast("Koneksi gagal. Pastikan URL API sudah benar.", "error");
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Terjadi kesalahan koneksi jaringan.</td></tr>';
+                if(tableBody) tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-[#FF3B30] py-10">Terjadi kesalahan koneksi jaringan.</td></tr>';
             } finally {
-                syncIcon.classList.add('hidden');
+                if(syncIcon) syncIcon.classList.add('hidden');
             }
         }
 
         function updateDropdownOptions() {
             const select = document.getElementById('branchSelect');
+            if(!select) return;
             select.innerHTML = '<option value="" disabled selected>Pilih Cabang...</option>';
             dbData.forEach((d) => {
                 select.insertAdjacentHTML('beforeend', `<option value="${d.branch}">${d.branch}</option>`);
@@ -382,6 +411,7 @@
             let worstBranch = { name: "-", rating: 5 };
 
             const tbody = document.getElementById('tableBody');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
             dbData.forEach((d, index) => {
@@ -422,7 +452,8 @@
             if (activeBranch) {
                 const index = dbData.findIndex(d => d.branch === activeBranch);
                 if (index > -1) {
-                    document.getElementById(`row-${index}`).classList.add('active-row');
+                    const activeRow = document.getElementById(`row-${index}`);
+                    if(activeRow) activeRow.classList.add('active-row');
                 }
             }
 
@@ -448,7 +479,7 @@
             if (row) row.classList.add('active-row');
 
             const dropdown = document.getElementById('branchSelect');
-            if (dropdown.value !== branchName) dropdown.value = branchName;
+            if (dropdown && dropdown.value !== branchName) dropdown.value = branchName;
 
             const overlay = document.getElementById('simOverlay');
             if (overlay) {
@@ -457,23 +488,25 @@
             }
 
             const bData = dbData.find(d => d.branch === branchName);
-            document.getElementById('s1').value = bData.star1;
-            document.getElementById('s2').value = bData.star2;
-            document.getElementById('s3').value = bData.star3;
-            document.getElementById('s4').value = bData.star4;
-            document.getElementById('s5').value = bData.star5;
+            if(bData) {
+                document.getElementById('s1').value = bData.star1;
+                document.getElementById('s2').value = bData.star2;
+                document.getElementById('s3').value = bData.star3;
+                document.getElementById('s4').value = bData.star4;
+                document.getElementById('s5').value = bData.star5;
 
-            const n = bData.star1 + bData.star2 + bData.star3 + bData.star4 + bData.star5;
-            const s = (bData.star1 * 1) + (bData.star2 * 2) + (bData.star3 * 3) + (bData.star4 * 4) + (bData.star5 * 5);
-            const currentR = n > 0 ? (s / n) : 0;
-            
-            let defaultTarget = (Math.floor(currentR * 10) + 1) / 10;
-            if (defaultTarget > 5) defaultTarget = 5.0;
-            if (defaultTarget < 1) defaultTarget = 4.0;
-            
-            document.getElementById('targetRating').value = defaultTarget.toFixed(1);
+                const n = bData.star1 + bData.star2 + bData.star3 + bData.star4 + bData.star5;
+                const s = (bData.star1 * 1) + (bData.star2 * 2) + (bData.star3 * 3) + (bData.star4 * 4) + (bData.star5 * 5);
+                const currentR = n > 0 ? (s / n) : 0;
+                
+                let defaultTarget = (Math.floor(currentR * 10) + 1) / 10;
+                if (defaultTarget > 5) defaultTarget = 5.0;
+                if (defaultTarget < 1) defaultTarget = 4.0;
+                
+                document.getElementById('targetRating').value = defaultTarget.toFixed(1);
 
-            calculate();
+                calculate();
+            }
         }
 
         function calculate() {
@@ -495,8 +528,10 @@
             const neededSuffix = document.getElementById('neededSuffix');
             let needed = 0;
 
-            // LOGIKA KHUSUS TARGET 5.0: Menggunakan proksi 4.95 karena pembulatan sistem Google
+            // LOGIKA PEMBULATAN GOOGLE MAPS UNTUK 5.0
             if (target === 5.0 && currentRating < 5.0 && n > 0) {
+                // Secara matematis murni nggak bisa 5.0 jika sudah ada nilai < 5
+                // Tapi Google kadang membulatkan 4.95 jadi 5.0. Kita pakai target proksi 4.95
                 const proxyTarget = 4.95;
                 needed = Math.ceil((proxyTarget * n - s) / (5 - proxyTarget));
                 if (needed < 0) needed = 0;
@@ -509,15 +544,15 @@
 
             if (typeof needed === 'number') {
                 document.getElementById('neededReviews').innerText = needed.toLocaleString('id-ID');
-                neededSuffix.classList.remove('hidden');
-                document.getElementById('neededReviews').classList.replace('text-2xl', 'text-4xl'); 
+                if(neededSuffix) neededSuffix.classList.remove('hidden');
+                document.getElementById('neededReviews').style.fontSize = "1.875rem";
             } else {
                 document.getElementById('neededReviews').innerText = needed;
-                document.getElementById('neededReviews').classList.replace('text-4xl', 'text-2xl'); 
-                neededSuffix.classList.add('hidden');
+                document.getElementById('neededReviews').style.fontSize = "1.875rem";
+                if(neededSuffix) neededSuffix.classList.add('hidden');
             }
             
-            // Re-render tabel hanya buat view kalau lagi iseng ngitung manual di UI
+            // Re-render tabel kalau mode Manual (simulasi on-the-fly) - TYPO VARIABEL DIPERBAIKI
             if(!isAutoInputMode) {
                let bData = dbData.find(d => d.branch === activeBranch);
                if(bData) {
@@ -528,15 +563,12 @@
         }
 
         async function saveData() {
-            if (!activeBranch || isAutoInputMode) return; // Proteksi
+            if (!activeBranch || isAutoInputMode) return; // Proteksi kalau mode auto gak bisa save manual
             
             const btn = document.getElementById('saveBtn');
             const originalContent = btn.innerHTML;
-            
-            // Animasi Loading Tombol
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan...';
             btn.disabled = true;
-            btn.classList.add('opacity-80', 'cursor-wait');
             
             const payload = {
                 action: 'updateAnalytics',
@@ -550,36 +582,27 @@
             };
 
             try {
-                // Jeda buatan (minimal 800ms) agar mata bisa melihat proses transisi loading tombol
-                const fetchPromise = fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const artificialDelay = new Promise(resolve => setTimeout(resolve, 800));
-                
-                await Promise.all([fetchPromise, artificialDelay]);
                 
                 showToast(`Data Presisi ${activeBranch} (${payload.periode}) berhasil disimpan!`, "success");
                 
                 let bData = dbData.find(d => d.branch === activeBranch);
-                if (bData) {
-                    bData.star1 = payload.star1; 
-                    bData.star2 = payload.star2;
-                    bData.star3 = payload.star3; 
-                    bData.star4 = payload.star4; 
-                    bData.star5 = payload.star5;
+                if(bData) {
+                    bData.star1 = payload.star1; bData.star2 = payload.star2;
+                    bData.star3 = payload.star3; bData.star4 = payload.star4; bData.star5 = payload.star5;
                     processAndRender();
                 }
                 
             } catch (err) {
                 showToast("Gagal menyimpan ke server.", "error");
             } finally {
-                // Kembalikan wujud tombol ke asal
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
-                btn.classList.remove('opacity-80', 'cursor-wait');
             }
         }
     </script>
