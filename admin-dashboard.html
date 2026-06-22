@@ -421,7 +421,9 @@
             dbData.forEach((d, index) => {
                 const totalReview = d.star1 + d.star2 + d.star3 + d.star4 + d.star5;
                 const totalScore = (d.star1 * 1) + (d.star2 * 2) + (d.star3 * 3) + (d.star4 * 4) + (d.star5 * 5);
-                const rating = totalReview > 0 ? (totalScore / totalReview) : 0;
+                // Pembulatan ala Google Maps (1 angka di belakang koma)
+                let rating = totalReview > 0 ? (totalScore / totalReview) : 0;
+                rating = Math.round(rating * 10) / 10;
                 const positif = totalReview > 0 ? ((d.star4 + d.star5) / totalReview * 100) : 0;
 
                 totalReviewGlobal += totalReview;
@@ -462,7 +464,9 @@
             }
 
             document.getElementById('w-total-review').innerText = totalReviewGlobal.toLocaleString('id-ID');
-            document.getElementById('w-rating').innerText = totalReviewGlobal > 0 ? (totalSkorGlobal / totalReviewGlobal).toFixed(2) : "0.0";
+            let wRating = totalReviewGlobal > 0 ? (totalSkorGlobal / totalReviewGlobal) : 0;
+            wRating = Math.round(wRating * 10) / 10;
+            document.getElementById('w-rating').innerText = wRating.toFixed(1).replace('.', ',');
             document.getElementById('w-best').innerText = bestBranch.name;
             document.getElementById('w-worst').innerText = worstBranch.name;
         }
@@ -525,9 +529,10 @@
 
             const n = s1 + s2 + s3 + s4 + s5;
             const s = (s1 * 1) + (s2 * 2) + (s3 * 3) + (s4 * 4) + (s5 * 5);
-            const currentRating = n > 0 ? (s / n) : 0;
+            let currentRating = n > 0 ? (s / n) : 0;
+            currentRating = Math.round(currentRating * 10) / 10;
 
-            document.getElementById('currentRatingLabel').innerText = currentRating.toFixed(2);
+            document.getElementById('currentRatingLabel').innerText = currentRating.toFixed(1).replace('.', ',');
             
             const neededSuffix = document.getElementById('neededSuffix');
             let needed = 0;
