@@ -421,9 +421,11 @@
             dbData.forEach((d, index) => {
                 const totalReview = d.star1 + d.star2 + d.star3 + d.star4 + d.star5;
                 const totalScore = (d.star1 * 1) + (d.star2 * 2) + (d.star3 * 3) + (d.star4 * 4) + (d.star5 * 5);
+                
                 // Pembulatan ala Google Maps (1 angka di belakang koma)
                 let rating = totalReview > 0 ? (totalScore / totalReview) : 0;
                 rating = Math.round(rating * 10) / 10;
+                
                 const positif = totalReview > 0 ? ((d.star4 + d.star5) / totalReview * 100) : 0;
 
                 totalReviewGlobal += totalReview;
@@ -447,7 +449,7 @@
                     <tr class="hover:bg-white/[0.05] transition-colors cursor-pointer" id="row-${index}" onclick="selectBranch('${safeBranch}', ${index})">
                         <td class="font-semibold text-white">${d.branch}</td>
                         <td class="font-medium">${totalReview.toLocaleString('id-ID')}</td>
-                        <td class="font-bold text-[#007AFF]">${rating.toFixed(2)}</td>
+                        <td class="font-bold text-[#007AFF]">${rating.toFixed(1).replace('.', ',')}</td>
                         <td>${positif.toFixed(1)}%</td>
                         <td>${statusHtml}</td>
                     </tr>
@@ -463,14 +465,15 @@
                 }
             }
 
+            // Hitung Rating Global Tertimbang (1 angka di belakang koma)
+            let globalRating = totalReviewGlobal > 0 ? (totalSkorGlobal / totalReviewGlobal) : 0;
+            globalRating = Math.round(globalRating * 10) / 10;
+
             document.getElementById('w-total-review').innerText = totalReviewGlobal.toLocaleString('id-ID');
-            let wRating = totalReviewGlobal > 0 ? (totalSkorGlobal / totalReviewGlobal) : 0;
-            wRating = Math.round(wRating * 10) / 10;
-            document.getElementById('w-rating').innerText = wRating.toFixed(1).replace('.', ',');
+            document.getElementById('w-rating').innerText = globalRating.toFixed(1).replace('.', ',');
             document.getElementById('w-best').innerText = bestBranch.name;
             document.getElementById('w-worst').innerText = worstBranch.name;
         }
-
         function selectBranchFromDropdown() {
             const selectVal = document.getElementById('branchSelect').value;
             const index = dbData.findIndex(d => d.branch === selectVal);
@@ -505,18 +508,21 @@
 
                 const n = bData.star1 + bData.star2 + bData.star3 + bData.star4 + bData.star5;
                 const s = (bData.star1 * 1) + (bData.star2 * 2) + (bData.star3 * 3) + (bData.star4 * 4) + (bData.star5 * 5);
-                const currentR = n > 0 ? (s / n) : 0;
                 
-                let defaultTarget = (Math.floor(currentR * 10) + 1) / 10;
-                if (defaultTarget > 5) defaultTarget = 5.0;
-                if (defaultTarget < 1) defaultTarget = 4.0;
+                // Ambil rating yang SUDAH dibulatkan ala Google Maps
+                const currentR = n > 0 ? (s / n) : 0;
+                const displayedR = Math.round(currentR * 10) / 10;
+                
+                // Target berikutnya otomatis naik 0,1 dari rating pembulatan Maps saat ini
+                let defaultTarget = displayedR + 0.1;
+                if (defaultTarget > 5.0) defaultTarget = 5.0;
+                if (defaultTarget < 1.0) defaultTarget = 4.0;
                 
                 document.getElementById('targetRating').value = defaultTarget.toFixed(1);
 
                 calculate();
             }
         }
-
         function calculate() {
             if (!activeBranch) return;
 
@@ -529,6 +535,7 @@
 
             const n = s1 + s2 + s3 + s4 + s5;
             const s = (s1 * 1) + (s2 * 2) + (s3 * 3) + (s4 * 4) + (s5 * 5);
+            // Pembulatan 1 angka di belakang koma untuk label rating saat ini di kalkulator
             let currentRating = n > 0 ? (s / n) : 0;
             currentRating = Math.round(currentRating * 10) / 10;
 
